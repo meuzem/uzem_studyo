@@ -1,0 +1,1401 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎬 UZEM İş Takvimi v3.0</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .controls {
+            padding: 30px;
+            background: #f8f9fa;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+            justify-content: center;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .control-group label {
+            font-weight: 600;
+            color: #333;
+            font-size: 1em;
+        }
+
+        select, button, input {
+            padding: 10px 16px;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            font-size: 0.95em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        select {
+            background: white;
+            color: #333;
+        }
+
+        input {
+            border: 2px solid #ddd;
+            cursor: text;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+        }
+
+        button:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button.danger {
+            background: #e74c3c;
+        }
+
+        button.danger:hover {
+            background: #c0392b;
+        }
+
+        button.success {
+            background: #27ae60;
+        }
+
+        button.success:hover {
+            background: #229954;
+        }
+
+        button.warning {
+            background: #f39c12;
+        }
+
+        button.warning:hover {
+            background: #e67e22;
+        }
+
+        .calendar {
+            padding: 30px;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .day-card {
+            background: white;
+            border: 3px solid #e0e0e0;
+            border-radius: 15px;
+            padding: 20px;
+            min-height: 200px;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .day-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            border-color: #667eea;
+        }
+
+        .day-card.today {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border-color: #2196f3;
+            border-width: 4px;
+        }
+
+        .day-header {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .day-card.today .day-header {
+            color: #2196f3;
+        }
+
+        .session {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .session-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .trainers-list {
+            min-height: 40px;
+        }
+
+        .trainer {
+            padding: 8px 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 6px;
+            margin: 5px 5px 5px 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .trainer:hover {
+            transform: scale(1.05);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+        }
+
+        .trainer .remove-btn {
+            background: rgba(255,255,255,0.3);
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8em;
+            cursor: pointer;
+        }
+
+        .trainer .remove-btn:hover {
+            background: rgba(255,255,255,0.5);
+        }
+
+        .add-trainer-btn {
+            padding: 6px 12px;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.85em;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.3s;
+        }
+
+        .add-trainer-btn:hover {
+            background: #229954;
+            transform: translateY(-1px);
+        }
+
+        .stats {
+            padding: 30px;
+            background: #f8f9fa;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            border: 3px solid #667eea;
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+            margin: 10px 0;
+        }
+
+        .stat-label {
+            font-size: 1.1em;
+            color: #666;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            overflow-y: auto;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            max-width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            margin: 20px;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 2em;
+            cursor: pointer;
+            color: #666;
+            z-index: 10;
+        }
+
+        .close-btn:hover {
+            color: #333;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 20px 0;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .report-table th,
+        .report-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .report-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+        }
+
+        .report-table tr:hover {
+            background: #f5f5f5;
+        }
+
+        .trainer-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        .trainer-list-item:hover {
+            background: #e8e8e8;
+        }
+
+        .add-form {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .add-form input {
+            flex: 1;
+        }
+
+        .success-message {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 30px;
+            border-left: 5px solid #2e7d32;
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .error-message {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 30px;
+            border-left: 5px solid #c62828;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .trainer-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .trainer-option {
+            padding: 10px 15px;
+            background: #e8e8e8;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .trainer-option:hover {
+            background: #d5d5d5;
+            transform: translateY(-2px);
+        }
+
+        .trainer-option.selected {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+
+        .info-box h3 {
+            color: #1976d2;
+            margin-bottom: 10px;
+        }
+
+        .info-box p {
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .export-buttons {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .email-form {
+            margin: 20px 0;
+        }
+
+        .email-form input {
+            width: 100%;
+            margin: 10px 0;
+            padding: 12px;
+        }
+
+        .email-form textarea {
+            width: 100%;
+            margin: 10px 0;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            min-height: 100px;
+            font-family: inherit;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .sheets-config {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+
+        .sheets-config h4 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 1200px) {
+            .calendar-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .calendar-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .calendar-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎬 ASENKRON EĞİTİM STÜDYO ÇEKİM TAKVİMİ</h1>
+            <p>Eğitmen çekim planı ve analiz sistemi - v3.0 (Google Sheets Entegrasyonlu)</p>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <label>📅 Ay:</label>
+                <select id="monthSelect" onchange="loadCalendar()">
+                    <option value="1">Ocak</option>
+                    <option value="2">Şubat</option>
+                    <option value="3">Mart</option>
+                    <option value="4">Nisan</option>
+                    <option value="5">Mayıs</option>
+                    <option value="6">Haziran</option>
+                    <option value="7">Temmuz</option>
+                    <option value="8">Ağustos</option>
+                    <option value="9">Eylül</option>
+                    <option value="10">Ekim</option>
+                    <option value="11" selected>Kasım</option>
+                    <option value="12">Aralık</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label>📆 Yıl:</label>
+                <select id="yearSelect" onchange="loadCalendar()">
+                    <option value="2024">2024</option>
+                    <option value="2025" selected>2025</option>
+                    <option value="2026">2026</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label>🔍 Filtre:</label>
+                <select id="trainerFilter" onchange="applyFilter()">
+                    <option value="all">Tümü</option>
+                </select>
+            </div>
+
+            <button onclick="loadFromSheets()">🔄 Sheets'ten Yükle</button>
+            <button onclick="showTrainerManager()">👥 Eğitmenler</button>
+            <button onclick="showReport()">📊 Rapor</button>
+            <button onclick="showChart()">📈 Grafik</button>
+            <button class="success" onclick="saveToSheets()">💾 Kaydet</button>
+            <button class="warning" onclick="showEmailReminder()">📧 Hatırlatma</button>
+        </div>
+
+        <div id="successMessage" class="success-message"></div>
+        <div id="errorMessage" class="error-message"></div>
+
+        <div class="stats" id="statsContainer">
+            <div class="stat-card">
+                <div class="stat-label">Toplam İş Günü</div>
+                <div class="stat-value" id="totalDays">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Dolu Seanslar</div>
+                <div class="stat-value" id="filledSessions">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Boş Seanslar</div>
+                <div class="stat-value" id="emptySessions">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Doluluk Oranı</div>
+                <div class="stat-value" id="fillRate">0%</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Toplam Çekim</div>
+                <div class="stat-value" id="totalShoots">0</div>
+            </div>
+        </div>
+
+        <div class="calendar">
+            <div class="sheets-config">
+                <h4>📊 Google Sheets Entegrasyonu</h4>
+                <p><strong>Spreadsheet ID:</strong> 1RHQFbzA-IBOfccFD9ZOIYD47gifahbfj0oDNXdQ4ySQ</p>
+                <p>💡 Not: Tam entegrasyon için Google Sheets API Key gereklidir. Şu an veriler localStorage'da saklanmaktadır.</p>
+            </div>
+
+            <div class="info-box">
+                <h3>💡 Nasıl Kullanılır?</h3>
+                <p>
+                    <strong>➕ Eğitmen Ekle:</strong> Her seansın "<strong>+ Eğitmen Ekle</strong>" butonuna tıklayın.<br>
+                    <strong>❌ Eğitmen Çıkar:</strong> Eğitmen adının yanındaki "<strong>×</strong>" simgesine tıklayın.<br>
+                    <strong>💾 Kaydet:</strong> Değişikliklerinizi kaydetmeyi unutmayın!<br>
+                    <strong>📧 Hatırlatma:</strong> Eğitmenlere e-posta gönderin.
+                </p>
+            </div>
+
+            <div id="calendarContainer" class="loading">
+                Takvim yükleniyor...
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="trainerManagerModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('trainerManagerModal')">&times;</span>
+            <h2>👥 Eğitmen Yönetimi</h2>
+
+            <div class="add-form">
+                <input type="text" id="newTrainerName" placeholder="Yeni eğitmen adı girin..." />
+                <button class="success" onclick="addTrainer()">➕ Ekle</button>
+            </div>
+
+            <div id="trainerListContainer"></div>
+        </div>
+    </div>
+
+    <div id="trainerSelectorModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('trainerSelectorModal')">&times;</span>
+            <h2>👤 Eğitmen Seçin</h2>
+            <p>Seansa eklemek istediğiniz eğitmenleri seçin:</p>
+            <div id="trainerSelector" class="trainer-selector"></div>
+            <br>
+            <button class="success" onclick="confirmTrainerSelection()">✅ Seçilenleri Ekle</button>
+            <button onclick="closeModal('trainerSelectorModal')">❌ İptal</button>
+        </div>
+    </div>
+
+    <div id="reportModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('reportModal')">&times;</span>
+            <h2>📊 Ay Bazlı Rapor</h2>
+            <div class="export-buttons">
+                <button onclick="exportToPDF()">📄 PDF İndir</button>
+                <button onclick="exportToExcel()">📊 Excel İndir</button>
+            </div>
+            <div id="reportContent"></div>
+        </div>
+    </div>
+
+    <div id="chartModal" class="modal">
+        <div class="modal-content" style="max-width: 1200px;">
+            <span class="close-btn" onclick="closeModal('chartModal')">&times;</span>
+            <h2>📈 Grafikler</h2>
+            <div class="chart-container">
+                <canvas id="filledChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <canvas id="trainerChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div id="emailModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('emailModal')">&times;</span>
+            <h2>📧 E-posta Hatırlatması Gönder</h2>
+            <div class="email-form">
+                <label>Kime:</label>
+                <input type="email" id="emailTo" placeholder="egitmen@ornek.com" />
+
+                <label>Konu:</label>
+                <input type="text" id="emailSubject" value="Çekim Hatırlatması" />
+
+                <label>Mesaj:</label>
+                <textarea id="emailMessage" placeholder="Merhaba,
+
+Önümüzdeki hafta için çekim planınız hazır. Lütfen takvimi kontrol ediniz.
+
+Saygılarımla,
+UZEM Stüdyo"></textarea>
+
+                <button class="success" onclick="sendEmailReminder()">📧 Gönder</button>
+                <button onclick="closeModal('emailModal')">❌ İptal</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SPREADSHEET_ID = '1RHQFbzA-IBOfccFD9ZOIYD47gifahbfj0oDNXdQ4ySQ';
+
+        let calendarData = {};
+        let allTrainers = new Set([
+            'Elif Egüz',
+            'Simay Beliç',
+            'Elif Gözde Özel Akman',
+            'Zeliha Bayraktar',
+            'Zeynep İris Bilen',
+            'Turgay Bekşen',
+            'Bülent Eren',
+            'Soner Altıkulaç'
+        ]);
+        let currentSessionForSelection = null;
+
+        const dayNames = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
+        const monthNames = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 
+                           'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+
+        window.onload = function() {
+            loadFromLocalStorage();
+            loadCalendar();
+        };
+
+        function loadCalendar() {
+            const month = parseInt(document.getElementById('monthSelect').value);
+            const year = parseInt(document.getElementById('yearSelect').value);
+
+            generateCalendar(month, year);
+            updateStats();
+        }
+
+        function generateCalendar(month, year) {
+            const container = document.getElementById('calendarContainer');
+            container.innerHTML = '';
+            container.className = 'calendar-grid';
+
+            const firstDay = new Date(year, month - 1, 1);
+            const lastDay = new Date(year, month, 0);
+            const daysInMonth = lastDay.getDate();
+
+            const today = new Date();
+            const isCurrentMonth = today.getMonth() === month - 1 && today.getFullYear() === year;
+
+            if (!calendarData[year]) calendarData[year] = {};
+            if (!calendarData[year][month]) calendarData[year][month] = {};
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(year, month - 1, day);
+                const dayOfWeek = date.getDay();
+
+                if (dayOfWeek === 0 || dayOfWeek === 6) continue;
+
+                const dayCard = document.createElement('div');
+                dayCard.className = 'day-card';
+
+                if (isCurrentMonth && day === today.getDate()) {
+                    dayCard.classList.add('today');
+                }
+
+                const dayHeader = document.createElement('div');
+                dayHeader.className = 'day-header';
+                dayHeader.textContent = `${day} ${monthNames[month-1]} ${dayNames[dayOfWeek]}`;
+                dayCard.appendChild(dayHeader);
+
+                const morningSession = createSession('🌅 Sabah', day, 'morning', year, month);
+                dayCard.appendChild(morningSession);
+
+                const noonSession = createSession('🌆 Öğle', day, 'noon', year, month);
+                dayCard.appendChild(noonSession);
+
+                container.appendChild(dayCard);
+
+                if (!calendarData[year][month][day]) {
+                    calendarData[year][month][day] = { morning: [], noon: [] };
+                }
+            }
+
+            if (month === 11 && year === 2025 && Object.keys(calendarData[year][month]).length === 0) {
+                loadSampleData(year, month);
+            }
+
+            updateTrainerFilter();
+            applyFilter();
+        }
+
+        function createSession(title, day, sessionType, year, month) {
+            const session = document.createElement('div');
+            session.className = 'session';
+
+            const sessionTitle = document.createElement('div');
+            sessionTitle.className = 'session-title';
+            sessionTitle.textContent = title;
+            session.appendChild(sessionTitle);
+
+            const trainersContainer = document.createElement('div');
+            trainersContainer.id = `${sessionType}-${day}-${month}-${year}`;
+            trainersContainer.className = 'trainers-list';
+            session.appendChild(trainersContainer);
+
+            const addBtn = document.createElement('button');
+            addBtn.className = 'add-trainer-btn';
+            addBtn.innerHTML = '➕ Eğitmen Ekle';
+            addBtn.onclick = () => openTrainerSelector(day, sessionType, year, month);
+            session.appendChild(addBtn);
+
+            if (calendarData[year] && calendarData[year][month] && calendarData[year][month][day]) {
+                renderSession(day, sessionType, year, month);
+            }
+
+            return session;
+        }
+
+        function loadSampleData(year, month) {
+            addTrainersToSession(10, 'morning', ['Elif Egüz'], year, month);
+            addTrainersToSession(10, 'noon', ['Elif Egüz'], year, month);
+            addTrainersToSession(11, 'morning', ['Simay Beliç'], year, month);
+            addTrainersToSession(11, 'noon', ['Simay Beliç'], year, month);
+            addTrainersToSession(12, 'morning', ['Elif Gözde Özel Akman'], year, month);
+            addTrainersToSession(12, 'noon', ['Elif Gözde Özel Akman'], year, month);
+            addTrainersToSession(13, 'morning', ['Zeliha Bayraktar'], year, month);
+            addTrainersToSession(13, 'noon', ['Zeliha Bayraktar'], year, month);
+            addTrainersToSession(17, 'morning', ['Zeynep İris Bilen'], year, month);
+            addTrainersToSession(18, 'morning', ['Turgay Bekşen'], year, month);
+            addTrainersToSession(18, 'noon', ['Turgay Bekşen'], year, month);
+            addTrainersToSession(20, 'morning', ['Bülent Eren'], year, month);
+            addTrainersToSession(20, 'noon', ['Bülent Eren'], year, month);
+            addTrainersToSession(21, 'morning', ['Soner Altıkulaç'], year, month);
+            addTrainersToSession(21, 'noon', ['Soner Altıkulaç'], year, month);
+        }
+
+        function addTrainersToSession(day, session, trainers, year, month) {
+            trainers.forEach(trainer => {
+                allTrainers.add(trainer);
+                if (!calendarData[year]) calendarData[year] = {};
+                if (!calendarData[year][month]) calendarData[year][month] = {};
+                if (!calendarData[year][month][day]) calendarData[year][month][day] = { morning: [], noon: [] };
+                if (!calendarData[year][month][day][session].includes(trainer)) {
+                    calendarData[year][month][day][session].push(trainer);
+                }
+            });
+
+            renderSession(day, session, year, month);
+        }
+
+        function renderSession(day, session, year, month) {
+            const containerId = `${session}-${day}-${month}-${year}`;
+            const container = document.getElementById(containerId);
+
+            if (!container) return;
+
+            container.innerHTML = '';
+
+            const trainers = calendarData[year]?.[month]?.[day]?.[session] || [];
+
+            trainers.forEach(trainer => {
+                const trainerElement = document.createElement('span');
+                trainerElement.className = 'trainer';
+                trainerElement.innerHTML = `
+                    ${trainer}
+                    <span class="remove-btn" onclick="removeTrainerFromSession(${day}, '${session}', '${trainer}', ${year}, ${month})">×</span>
+                `;
+                container.appendChild(trainerElement);
+            });
+        }
+
+        function removeTrainerFromSession(day, session, trainer, year, month) {
+            if (!calendarData[year]?.[month]?.[day]) return;
+
+            const index = calendarData[year][month][day][session].indexOf(trainer);
+            if (index > -1) {
+                calendarData[year][month][day][session].splice(index, 1);
+                renderSession(day, session, year, month);
+                updateStats();
+                saveToLocalStorage();
+            }
+        }
+
+        function openTrainerSelector(day, sessionType, year, month) {
+            currentSessionForSelection = { day, sessionType, year, month };
+
+            const selector = document.getElementById('trainerSelector');
+            selector.innerHTML = '';
+
+            Array.from(allTrainers).sort().forEach(trainer => {
+                const option = document.createElement('div');
+                option.className = 'trainer-option';
+                option.textContent = trainer;
+                option.dataset.trainer = trainer;
+
+                const existingTrainers = calendarData[year]?.[month]?.[day]?.[sessionType] || [];
+                if (existingTrainers.includes(trainer)) {
+                    option.classList.add('selected');
+                }
+
+                option.onclick = function() {
+                    this.classList.toggle('selected');
+                };
+
+                selector.appendChild(option);
+            });
+
+            document.getElementById('trainerSelectorModal').classList.add('active');
+        }
+
+        function confirmTrainerSelection() {
+            if (!currentSessionForSelection) return;
+
+            const { day, sessionType, year, month } = currentSessionForSelection;
+            const selectedOptions = document.querySelectorAll('.trainer-option.selected');
+            const selectedTrainers = Array.from(selectedOptions).map(opt => opt.dataset.trainer);
+
+            if (!calendarData[year]) calendarData[year] = {};
+            if (!calendarData[year][month]) calendarData[year][month] = {};
+            if (!calendarData[year][month][day]) {
+                calendarData[year][month][day] = { morning: [], noon: [] };
+            }
+
+            calendarData[year][month][day][sessionType] = selectedTrainers;
+            renderSession(day, sessionType, year, month);
+            updateStats();
+            saveToLocalStorage();
+
+            closeModal('trainerSelectorModal');
+            currentSessionForSelection = null;
+        }
+
+        function showTrainerManager() {
+            const container = document.getElementById('trainerListContainer');
+            container.innerHTML = '';
+
+            Array.from(allTrainers).sort().forEach(trainer => {
+                const item = document.createElement('div');
+                item.className = 'trainer-list-item';
+                item.innerHTML = `
+                    <span>${trainer}</span>
+                    <button class="danger" onclick="removeTrainer('${trainer}')">🗑️ Sil</button>
+                `;
+                container.appendChild(item);
+            });
+
+            document.getElementById('trainerManagerModal').classList.add('active');
+        }
+
+        function addTrainer() {
+            const input = document.getElementById('newTrainerName');
+            const name = input.value.trim();
+
+            if (name === '') {
+                showError('Lütfen bir eğitmen adı girin!');
+                return;
+            }
+
+            if (allTrainers.has(name)) {
+                showError('Bu eğitmen zaten mevcut!');
+                return;
+            }
+
+            allTrainers.add(name);
+            input.value = '';
+            showTrainerManager();
+            updateTrainerFilter();
+            saveToLocalStorage();
+            showSuccess('Eğitmen eklendi!');
+        }
+
+        function removeTrainer(trainer) {
+            if (!confirm(`"${trainer}" eğitmenini silmek istediğinize emin misiniz?`)) {
+                return;
+            }
+
+            allTrainers.delete(trainer);
+
+            Object.keys(calendarData).forEach(year => {
+                Object.keys(calendarData[year]).forEach(month => {
+                    Object.keys(calendarData[year][month]).forEach(day => {
+                        ['morning', 'noon'].forEach(session => {
+                            const index = calendarData[year][month][day][session].indexOf(trainer);
+                            if (index > -1) {
+                                calendarData[year][month][day][session].splice(index, 1);
+                            }
+                        });
+                    });
+                });
+            });
+
+            showTrainerManager();
+            updateTrainerFilter();
+            updateStats();
+            saveToLocalStorage();
+            loadCalendar();
+            showSuccess('Eğitmen silindi!');
+        }
+
+        function updateTrainerFilter() {
+            const filter = document.getElementById('trainerFilter');
+            const currentValue = filter.value;
+
+            filter.innerHTML = '<option value="all">Tümü</option>';
+
+            Array.from(allTrainers).sort().forEach(trainer => {
+                const option = document.createElement('option');
+                option.value = trainer;
+                option.textContent = trainer;
+                filter.appendChild(option);
+            });
+
+            filter.value = currentValue;
+        }
+
+        function applyFilter() {
+            const filterValue = document.getElementById('trainerFilter').value;
+            const dayCards = document.querySelectorAll('.day-card');
+
+            dayCards.forEach(card => {
+                if (filterValue === 'all') {
+                    card.style.display = 'block';
+                    return;
+                }
+
+                const trainers = card.querySelectorAll('.trainer');
+                let hasMatch = false;
+
+                trainers.forEach(trainer => {
+                    const trainerName = trainer.textContent.replace('×', '').trim();
+                    if (trainerName === filterValue) {
+                        hasMatch = true;
+                    }
+                });
+
+                card.style.display = hasMatch ? 'block' : 'none';
+            });
+        }
+
+        function updateStats() {
+            const year = parseInt(document.getElementById('yearSelect').value);
+            const month = parseInt(document.getElementById('monthSelect').value);
+
+            const monthData = calendarData[year]?.[month] || {};
+            const workDays = Object.keys(monthData).length;
+            let filled = 0;
+            let empty = 0;
+            let totalShoots = 0;
+
+            Object.values(monthData).forEach(day => {
+                if (day.morning.length > 0) {
+                    filled++;
+                    totalShoots += day.morning.length;
+                } else {
+                    empty++;
+                }
+
+                if (day.noon.length > 0) {
+                    filled++;
+                    totalShoots += day.noon.length;
+                } else {
+                    empty++;
+                }
+            });
+
+            const totalSessions = filled + empty;
+            const fillRate = totalSessions > 0 ? Math.round((filled / totalSessions) * 100) : 0;
+
+            document.getElementById('totalDays').textContent = workDays;
+            document.getElementById('filledSessions').textContent = filled;
+            document.getElementById('emptySessions').textContent = empty;
+            document.getElementById('fillRate').textContent = fillRate + '%';
+            document.getElementById('totalShoots').textContent = totalShoots;
+        }
+
+        function saveToLocalStorage() {
+            const dataToSave = {
+                calendarData: calendarData,
+                trainers: Array.from(allTrainers),
+                savedAt: new Date().toISOString()
+            };
+
+            localStorage.setItem('calendarData', JSON.stringify(dataToSave));
+        }
+
+        function loadFromLocalStorage() {
+            const saved = localStorage.getItem('calendarData');
+            if (saved) {
+                const data = JSON.parse(saved);
+                calendarData = data.calendarData || {};
+                allTrainers = new Set(data.trainers || []);
+            }
+        }
+
+        function saveToSheets() {
+            saveToLocalStorage();
+            showSuccess('✅ Veriler kaydedildi! (Google Sheets API entegrasyonu için API Key gereklidir)');
+            console.log('Kaydedilen veri:', {
+                calendarData,
+                trainers: Array.from(allTrainers)
+            });
+        }
+
+        function loadFromSheets() {
+            loadFromLocalStorage();
+            loadCalendar();
+            showSuccess('✅ Veriler yüklendi!');
+        }
+
+        function showReport() {
+            const year = parseInt(document.getElementById('yearSelect').value);
+            const month = parseInt(document.getElementById('monthSelect').value);
+            const monthData = calendarData[year]?.[month] || {};
+
+            const workDays = Object.keys(monthData).length;
+            let filled = 0;
+            let empty = 0;
+            let totalShoots = 0;
+
+            Object.values(monthData).forEach(day => {
+                if (day.morning.length > 0) {
+                    filled++;
+                    totalShoots += day.morning.length;
+                } else empty++;
+
+                if (day.noon.length > 0) {
+                    filled++;
+                    totalShoots += day.noon.length;
+                } else empty++;
+            });
+
+            const totalSessions = filled + empty;
+            const fillRate = totalSessions > 0 ? ((filled / totalSessions) * 100).toFixed(1) : 0;
+
+            let html = `
+                <h3>${monthNames[month-1]} ${year} Dönemi Raporu</h3>
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>Metrik</th>
+                            <th>Değer</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Toplam İş Günü</td><td>${workDays}</td></tr>
+                        <tr><td>Toplam Seans</td><td>${totalSessions}</td></tr>
+                        <tr><td>Dolu Seanslar</td><td>${filled}</td></tr>
+                        <tr><td>Boş Seanslar</td><td>${empty}</td></tr>
+                        <tr><td>Doluluk Oranı</td><td>${fillRate}%</td></tr>
+                        <tr><td>Toplam Çekim Sayısı</td><td>${totalShoots}</td></tr>
+                        <tr><td>Gün Başı Ort. Çekim</td><td>${workDays > 0 ? (totalShoots / workDays).toFixed(1) : 0}</td></tr>
+                    </tbody>
+                </table>
+            `;
+
+            document.getElementById('reportContent').innerHTML = html;
+            document.getElementById('reportModal').classList.add('active');
+        }
+
+        function showChart() {
+            const year = parseInt(document.getElementById('yearSelect').value);
+            const month = parseInt(document.getElementById('monthSelect').value);
+            const monthData = calendarData[year]?.[month] || {};
+
+            let filled = 0;
+            let empty = 0;
+            const trainerCounts = {};
+
+            Object.values(monthData).forEach(day => {
+                if (day.morning.length > 0) {
+                    filled++;
+                    day.morning.forEach(t => trainerCounts[t] = (trainerCounts[t] || 0) + 1);
+                } else empty++;
+
+                if (day.noon.length > 0) {
+                    filled++;
+                    day.noon.forEach(t => trainerCounts[t] = (trainerCounts[t] || 0) + 1);
+                } else empty++;
+            });
+
+            // Dolu/Boş Seans Grafiği
+            const filledCtx = document.getElementById('filledChart');
+            if (window.filledChart) window.filledChart.destroy();
+            window.filledChart = new Chart(filledCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['Dolu Seanslar', 'Boş Seanslar'],
+                    datasets: [{
+                        data: [filled, empty],
+                        backgroundColor: ['#27ae60', '#e74c3c'],
+                        borderWidth: 3,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Seans Doluluk Durumu',
+                            font: { size: 18 }
+                        },
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+
+            // Eğitmen Bazlı Grafik
+            const trainerLabels = Object.keys(trainerCounts);
+            const trainerData = Object.values(trainerCounts);
+            const colors = generateColors(trainerLabels.length);
+
+            const trainerCtx = document.getElementById('trainerChart');
+            if (window.trainerChart) window.trainerChart.destroy();
+            window.trainerChart = new Chart(trainerCtx, {
+                type: 'bar',
+                data: {
+                    labels: trainerLabels,
+                    datasets: [{
+                        label: 'Çekim Sayısı',
+                        data: trainerData,
+                        backgroundColor: colors,
+                        borderColor: colors,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Eğitmen Bazlı Çekim Sayıları',
+                            font: { size: 18 }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1 }
+                        }
+                    }
+                }
+            });
+
+            document.getElementById('chartModal').classList.add('active');
+        }
+
+        function generateColors(count) {
+            const colors = [];
+            for (let i = 0; i < count; i++) {
+                const hue = (i * 360 / count) % 360;
+                colors.push(`hsla(${hue}, 70%, 60%, 0.8)`);
+            }
+            return colors;
+        }
+
+        function exportToPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            const year = parseInt(document.getElementById('yearSelect').value);
+            const month = parseInt(document.getElementById('monthSelect').value);
+
+            doc.setFontSize(18);
+            doc.text(`${monthNames[month-1]} ${year} Çekim Raporu`, 14, 20);
+
+            const monthData = calendarData[year]?.[month] || {};
+            const workDays = Object.keys(monthData).length;
+            let filled = 0, empty = 0, totalShoots = 0;
+
+            Object.values(monthData).forEach(day => {
+                if (day.morning.length > 0) { filled++; totalShoots += day.morning.length; } else empty++;
+                if (day.noon.length > 0) { filled++; totalShoots += day.noon.length; } else empty++;
+            });
+
+            const tableData = [
+                ['Toplam İş Günü', workDays],
+                ['Dolu Seanslar', filled],
+                ['Boş Seanslar', empty],
+                ['Doluluk Oranı', `${((filled/(filled+empty))*100).toFixed(1)}%`],
+                ['Toplam Çekim', totalShoots]
+            ];
+
+            doc.autoTable({
+                head: [['Metrik', 'Değer']],
+                body: tableData,
+                startY: 30
+            });
+
+            doc.save(`cekim-raporu-${month}-${year}.pdf`);
+            showSuccess('📄 PDF raporu indirildi!');
+        }
+
+        function exportToExcel() {
+            const year = parseInt(document.getElementById('yearSelect').value);
+            const month = parseInt(document.getElementById('monthSelect').value);
+            const monthData = calendarData[year]?.[month] || {};
+
+            const data = [];
+            data.push(['Gün', 'Tarih', 'Sabah Seansı', 'Öğle Seansı']);
+
+            Object.keys(monthData).sort((a, b) => a - b).forEach(day => {
+                const date = new Date(year, month - 1, day);
+                const dayName = dayNames[date.getDay()];
+                const morning = monthData[day].morning.join(', ') || 'Boş';
+                const noon = monthData[day].noon.join(', ') || 'Boş';
+
+                data.push([dayName, `${day} ${monthNames[month-1]} ${year}`, morning, noon]);
+            });
+
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Çekim Takvimi");
+
+            XLSX.writeFile(wb, `cekim-takvimi-${month}-${year}.xlsx`);
+            showSuccess('📊 Excel dosyası indirildi!');
+        }
+
+        function showEmailReminder() {
+            document.getElementById('emailModal').classList.add('active');
+        }
+
+        function sendEmailReminder() {
+            const to = document.getElementById('emailTo').value;
+            const subject = document.getElementById('emailSubject').value;
+            const message = document.getElementById('emailMessage').value;
+
+            if (!to) {
+                showError('Lütfen e-posta adresi girin!');
+                return;
+            }
+
+            // Gerçek e-posta gönderimi için backend API gereklidir
+            console.log('E-posta gönderildi:', { to, subject, message });
+
+            closeModal('emailModal');
+            showSuccess('📧 E-posta hatırlatması gönderildi! (Demo modunda, gerçek gönderim için backend API gereklidir)');
+        }
+
+        function showSuccess(message) {
+            const el = document.getElementById('successMessage');
+            el.textContent = message;
+            el.classList.add('show');
+            setTimeout(() => el.classList.remove('show'), 3000);
+        }
+
+        function showError(message) {
+            const el = document.getElementById('errorMessage');
+            el.textContent = message;
+            el.classList.add('show');
+            setTimeout(() => el.classList.remove('show'), 3000);
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        // Enter tuşu ile eğitmen ekleme
+        document.addEventListener('DOMContentLoaded', function() {
+            const input = document.getElementById('newTrainerName');
+            if (input) {
+                input.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') addTrainer();
+                });
+            }
+        });
+    </script>
+</body>
+</html>
