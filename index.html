@@ -898,8 +898,24 @@
                         show={showTrainerModal}
                         onClose={() => setShowTrainerModal(false)}
                         trainers={trainersList}
-                        onAddTrainer={(name) => setTrainersList([...trainersList, name])}
-                        onRemoveTrainer={(name) => setTrainersList(trainersList.filter(t => t !== name))}
+                        onAddTrainer={(name) => {
+                            const newList = [...trainersList, name];
+                            setTrainersList(newList);
+                            // Firebase'e kaydet - KALICI KAYIT
+                            if (database) {
+                                database.ref("trainers").set(newList);
+                                console.log("✅ Eğitmen eklendi ve Firebase'e kaydedildi:", name);
+                            }
+                        }}
+                        onRemoveTrainer={(name) => {
+                            const newList = trainersList.filter(t => t !== name);
+                            setTrainersList(newList);
+                            // Firebase'e kaydet - KALICI KAYIT
+                            if (database) {
+                                database.ref("trainers").set(newList);
+                                console.log("✅ Eğitmen silindi ve Firebase'e kaydedildi:", name);
+                            }
+                        }}
                         newName={newTrainerName}
                         setNewName={setNewTrainerName}
                     />
