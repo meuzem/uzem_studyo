@@ -542,7 +542,7 @@
                     const data = snapshot.val() || {};
                     setCalendarData(data);
                     setLoading(false);
-                    setSyncStatus('Senkronize edildi ✓');
+                    setSyncStatus("Senkronize edildi ✓");
                     setTimeout(() => setSyncStatus(''), 3000);
                 });
 
@@ -551,10 +551,10 @@
 
             // Google Sheets senkronizasyonu (simüle)
             const syncToSheets = async () => {
-                setSyncStatus('Google Sheets ile senkronize ediliyor...');
+                setSyncStatus("Google Sheets ile senkronize ediliyor...");
                 // Burada Google Sheets API çağrısı yapılacak
                 setTimeout(() => {
-                    setSyncStatus('Google Sheets'e kaydedildi ✓');
+                    setSyncStatus("Google Sheets'e kaydedildi ✓");
                     setTimeout(() => setSyncStatus(''), 3000);
                 }, 1500);
             };
