@@ -598,9 +598,9 @@
         const TRAINERS = ["Elif Egüz", "Simay Beliç", "Elif Gözde Özel Akman", "Zeliha Bayraktar", "Zeynep İris Bilen", "Turgay Bekşen", "Bülent Eren", "Soner Altıkulaç"];
 
         // Eğitmen yönetimi için state (YENI EKLENEN)
-        const [trainersList, setTrainersList] = useState([...TRAINERS]);
-        const [showTrainerModal, setShowTrainerModal] = useState(false);
-        const [newTrainerName, setNewTrainerName] = useState("");
+        const [trainersList, setTrainersList] = React.useState([...TRAINERS]);
+        const [showTrainerModal, setShowTrainerModal] = React.useState(false);
+        const [newTrainerName, setNewTrainerName] = React.useState("");
 
         // Türkçe gün isimleri
         const WEEKDAYS = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'];
@@ -794,11 +794,7 @@
                             <h1>🎬 UZEM İş Takvimi</h1>
                             <p>Stüdyo Çekim Planlama Sistemi</p>
                         </div>
-                        <div className="loading">
-                            <div style={{fontSize: "3em", marginBottom: "20px"}}>⏳</div>
-                            <div>Firebase bağlantısı kuruluyor...</div>
-                            <div style={{fontSize: "0.9em", marginTop: "10px", opacity: "0.7"}}>İlk yüklenme biraz uzun sürebilir</div>
-                        </div>
+                        <div className="loading">Yükleniyor...</div>
                     </div>
                 );
             }
@@ -902,24 +898,8 @@
                         show={showTrainerModal}
                         onClose={() => setShowTrainerModal(false)}
                         trainers={trainersList}
-                        onAddTrainer={(name) => {
-                            const newList = [...trainersList, name];
-                            setTrainersList(newList);
-                            // Firebase'e kaydet - KALICI KAYIT
-                            if (database) {
-                                database.ref("trainers").set(newList);
-                                console.log("✅ Eğitmen eklendi ve Firebase'e kaydedildi:", name);
-                            }
-                        }}
-                        onRemoveTrainer={(name) => {
-                            const newList = trainersList.filter(t => t !== name);
-                            setTrainersList(newList);
-                            // Firebase'e kaydet - KALICI KAYIT
-                            if (database) {
-                                database.ref("trainers").set(newList);
-                                console.log("✅ Eğitmen silindi ve Firebase'e kaydedildi:", name);
-                            }
-                        }}
+                        onAddTrainer={(name) => setTrainersList([...trainersList, name])}
+                        onRemoveTrainer={(name) => setTrainersList(trainersList.filter(t => t !== name))}
                         newName={newTrainerName}
                         setNewName={setNewTrainerName}
                     />
@@ -1088,11 +1068,68 @@
                             }
                         }
                     });
+                    
+                    // Pasta grafik - Dolu vs Boş Seanslar
+                    if (pieChartRef.current) {
+                        const pieCtx = pieChartRef.current.getContext("2d");
+
+                        if (pieChartInstance.current) {
+                            pieChartInstance.current.destroy();
+                        }
+
+                        pieChartInstance.current = new Chart(pieCtx, {
+                            type: "pie",
+                            data: {
+                                labels: ["Dolu Seanslar", "Boş Seanslar"],
+                                datasets: [{
+                                    data: [stats.filledSessions, stats.emptySessions],
+                                    backgroundColor: [
+                                        "rgba(102, 126, 234, 0.8)",
+                                        "rgba(255, 99, 132, 0.8)"
+                                    ],
+                                    borderColor: [
+                                        "rgba(102, 126, 234, 1)",
+                                        "rgba(255, 99, 132, 1)"
+                                    ],
+                                    borderWidth: 2
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: {
+                                        position: "bottom",
+                                        labels: {
+                                            font: {
+                                                size: 14
+                                            },
+                                            padding: 20
+                                        }
+                                    },
+                                    tooltip: {
+                                        callbacks: {
+                                            label: function(context) {
+                                                const label = context.label || "";
+                                                const value = context.parsed || 0;
+                                                const total = stats.totalSessions;
+                                                const percentage = ((value / total) * 100).toFixed(1);
+                                                return label + ": " + value + " (" + percentage + "%)";
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    }
                 }
 
                 return () => {
                     if (chartInstance.current) {
                         chartInstance.current.destroy();
+                    }
+                    if (pieChartInstance.current) {
+                        pieChartInstance.current.destroy();
                     }
                 };
             }, [show, stats]);
