@@ -484,6 +484,86 @@
                 width: 100%;
             }
         }
+
+        /* Eğitmen Yönetimi Modal Stilleri - YENI EKLENEN */
+        .trainer-management {
+            padding: 20px;
+        }
+
+        .trainer-list-management {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .trainer-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .trainer-item-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .trainer-item-remove {
+            background: #ff4757;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s;
+        }
+
+        .trainer-item-remove:hover {
+            background: #ff3838;
+            transform: scale(1.05);
+        }
+
+        .add-trainer-section {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .add-trainer-input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            font-size: 1em;
+        }
+
+        .add-trainer-btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .add-trainer-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .add-trainer-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
@@ -516,6 +596,11 @@
 
         // Eğitmenler listesi
         const TRAINERS = ["Elif Egüz", "Simay Beliç", "Elif Gözde Özel Akman", "Zeliha Bayraktar", "Zeynep İris Bilen", "Turgay Bekşen", "Bülent Eren", "Soner Altıkulaç"];
+
+        // Eğitmen yönetimi için state (YENI EKLENEN)
+        const [trainersList, setTrainersList] = React.useState([...TRAINERS]);
+        const [showTrainerModal, setShowTrainerModal] = React.useState(false);
+        const [newTrainerName, setNewTrainerName] = React.useState("");
 
         // Türkçe gün isimleri
         const WEEKDAYS = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'];
@@ -766,6 +851,10 @@
                         }}>
                             🔄 Bugün
                         </button>
+
+                        <button className="btn btn-success" onClick={() => setShowTrainerModal(true)}>
+                            👥 Eğitmen Yönetimi
+                        </button>
                     </div>
 
                     <div className="calendar">
@@ -803,6 +892,16 @@
                         stats={stats}
                         month={MONTHS[selectedMonth]}
                         year={selectedYear}
+                    />
+
+                    <TrainerManagementModal
+                        show={showTrainerModal}
+                        onClose={() => setShowTrainerModal(false)}
+                        trainers={trainersList}
+                        onAddTrainer={(name) => setTrainersList([...trainersList, name])}
+                        onRemoveTrainer={(name) => setTrainersList(trainersList.filter(t => t !== name))}
+                        newName={newTrainerName}
+                        setNewName={setNewTrainerName}
                     />
                 </div>
             );
@@ -853,7 +952,7 @@
                                 />
                                 {showMorningSuggestions && morningInput && (
                                     <div className="trainer-suggestions">
-                                        {filteredTrainers(TRAINERS)
+                                        {filteredTrainers(trainersList)
                                             .filter(t => t.toLowerCase().includes(morningInput.toLowerCase()))
                                             .map((trainer, idx) => (
                                                 <div 
@@ -900,7 +999,7 @@
                                 />
                                 {showAfternoonSuggestions && afternoonInput && (
                                     <div className="trainer-suggestions">
-                                        {filteredTrainers(TRAINERS)
+                                        {filteredTrainers(trainersList)
                                             .filter(t => t.toLowerCase().includes(afternoonInput.toLowerCase()))
                                             .map((trainer, idx) => (
                                                 <div 
