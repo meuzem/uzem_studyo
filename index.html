@@ -598,9 +598,9 @@
         const TRAINERS = ["Elif Egüz", "Simay Beliç", "Elif Gözde Özel Akman", "Zeliha Bayraktar", "Zeynep İris Bilen", "Turgay Bekşen", "Bülent Eren", "Soner Altıkulaç"];
 
         // Eğitmen yönetimi için state (YENI EKLENEN)
-        const [trainersList, setTrainersList] = React.useState([...TRAINERS]);
-        const [showTrainerModal, setShowTrainerModal] = React.useState(false);
-        const [newTrainerName, setNewTrainerName] = React.useState("");
+        const [trainersList, setTrainersList] = useState([...TRAINERS]);
+        const [showTrainerModal, setShowTrainerModal] = useState(false);
+        const [newTrainerName, setNewTrainerName] = useState("");
 
         // Türkçe gün isimleri
         const WEEKDAYS = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'];
@@ -794,7 +794,11 @@
                             <h1>🎬 UZEM İş Takvimi</h1>
                             <p>Stüdyo Çekim Planlama Sistemi</p>
                         </div>
-                        <div className="loading">Yükleniyor...</div>
+                        <div className="loading">
+                            <div style={{fontSize: "3em", marginBottom: "20px"}}>⏳</div>
+                            <div>Firebase bağlantısı kuruluyor...</div>
+                            <div style={{fontSize: "0.9em", marginTop: "10px", opacity: "0.7"}}>İlk yüklenme biraz uzun sürebilir</div>
+                        </div>
                     </div>
                 );
             }
@@ -1040,6 +1044,8 @@
         }
 
         function ReportModal({ show, onClose, stats, month, year }) {
+            const pieChartRef = useRef(null);
+            const pieChartInstance = useRef(null);
             const chartRef = useRef(null);
             const chartInstance = useRef(null);
 
@@ -1136,9 +1142,16 @@
                         </div>
 
                         <div className="report-section">
-                            <h3>Grafik</h3>
+                            <h3>Eğitmen Bazlı Grafik</h3>
                             <div className="chart-container">
                                 <canvas ref={chartRef}></canvas>
+                            </div>
+                        </div>
+
+                        <div className="report-section">
+                            <h3>Seans Doluluk Grafiği</h3>
+                            <div className="chart-container" style={{height: "300px"}}>
+                                <canvas ref={pieChartRef}></canvas>
                             </div>
                         </div>
                     </div>
