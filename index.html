@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UZEM İş Takvimi - Stüdyo Çekim Planlama</title>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -847,19 +847,19 @@
                             />
                         </div>
 
-                        <button className="btn btn-primary" onClick={() => setShowReport(true)}>
-                            📊 Rapor Göster
+                        <button className="btn btn-secondary" onClick={() => {
+                            setSelectedMonth(new Date().getMonth());
+                            setSelectedYear(new Date().getFullYear());
+                        }}>
+                            🔄 Bugün
                         </button>
 
                         <button className="btn btn-warning" onClick={() => setShowTrainerManagement(true)}>
                             👥 Eğitmen Yönetimi
                         </button>
 
-                        <button className="btn btn-secondary" onClick={() => {
-                            setSelectedMonth(new Date().getMonth());
-                            setSelectedYear(new Date().getFullYear());
-                        }}>
-                            🔄 Bugün
+                        <button className="btn btn-primary" onClick={() => setShowReport(true)}>
+                            📊 Rapor Göster
                         </button>
                     </div>
 
