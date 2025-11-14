@@ -118,11 +118,25 @@
 
         .btn-success {
             background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            font-size: 0.9em;
+            padding: 8px 16px;
         }
 
         .btn-success:hover {
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(79, 172, 254, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff4757 0%, #ff3838 100%);
+            font-size: 0.85em;
+            padding: 4px 10px;
+            margin-left: auto;
+        }
+
+        .btn-danger:hover {
+            transform: scale(1.05);
+            box-shadow: 0 3px 10px rgba(255, 71, 87, 0.4);
         }
 
         .calendar {
@@ -221,17 +235,24 @@
             border-left: 4px solid #667eea;
         }
 
+        .session-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
         .session-time {
             font-weight: 600;
             color: #667eea;
             font-size: 0.9em;
-            margin-bottom: 5px;
         }
 
         .trainers-list {
             display: flex;
             flex-direction: column;
             gap: 5px;
+            margin-bottom: 10px;
         }
 
         .trainer-tag {
@@ -243,34 +264,33 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            animation: slideIn 0.3s ease-out;
         }
 
-        .remove-btn {
-            background: #ff4757;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 2px 8px;
-            cursor: pointer;
-            font-size: 0.8em;
-            transition: all 0.3s;
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
         }
 
-        .remove-btn:hover {
-            background: #ff3838;
-            transform: scale(1.1);
-        }
-
-        .add-trainer {
+        .add-trainer-section {
             margin-top: 10px;
+            position: relative;
         }
 
-        .add-trainer input {
+        .add-trainer-section select {
             width: 100%;
             padding: 8px;
-            border: 2px dashed #667eea;
+            border: 2px solid #667eea;
             border-radius: 6px;
             font-size: 0.85em;
+            margin-bottom: 8px;
+            background: white;
         }
 
         .trainer-suggestions {
@@ -283,6 +303,7 @@
             overflow-y: auto;
             z-index: 1000;
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            width: 100%;
         }
 
         .trainer-suggestion {
@@ -542,21 +563,26 @@
                     const data = snapshot.val() || {};
                     setCalendarData(data);
                     setLoading(false);
-                    setSyncStatus("Senkronize edildi ✓");
+                    setSyncStatus("✓ Veriler senkronize edildi");
                     setTimeout(() => setSyncStatus(''), 3000);
                 });
 
                 return () => dataRef.off();
             }, []);
 
-            // Google Sheets senkronizasyonu (simüle)
-            const syncToSheets = async () => {
-                setSyncStatus("Google Sheets ile senkronize ediliyor...");
-                // Burada Google Sheets API çağrısı yapılacak
-                setTimeout(() => {
-                    setSyncStatus(`Google Sheets'e kaydedildi ✓`);
-                    setTimeout(() => setSyncStatus(''), 3000);
-                }, 1500);
+            // Firebase'e kaydet
+            const saveToDatabase = (key, data) => {
+                if (database) {
+                    database.ref(`calendar/${key}`).set(data)
+                        .then(() => {
+                            setSyncStatus("✓ Firebase'e kaydedildi");
+                            setTimeout(() => setSyncStatus(''), 3000);
+                        })
+                        .catch((error) => {
+                            setSyncStatus("✗ Kaydetme hatası: " + error.message);
+                            console.error("Firebase save error:", error);
+                        });
+                }
             };
 
             // Takvim günlerini oluştur
@@ -565,26 +591,21 @@
                 const lastDay = new Date(selectedYear, selectedMonth + 1, 0);
                 const days = [];
 
-                // Ayın ilk gününün haftaiçi hangi gün olduğunu bul (0=Pazartesi)
                 let firstWeekday = firstDay.getDay() - 1;
                 if (firstWeekday < 0) firstWeekday = 6;
 
-                // Sadece hafta içi günleri göster (Pazartesi-Cuma)
                 if (firstWeekday >= 5) {
                     firstWeekday = 0;
                 }
 
-                // Boş günler ekle
                 for (let i = 0; i < firstWeekday; i++) {
                     days.push(null);
                 }
 
-                // Ayın günlerini ekle
                 for (let day = 1; day <= lastDay.getDate(); day++) {
                     const date = new Date(selectedYear, selectedMonth, day);
                     const weekday = date.getDay();
 
-                    // Sadece haftaiçi (Pazartesi-Cuma)
                     if (weekday >= 1 && weekday <= 5) {
                         days.push({
                             date: day,
@@ -606,6 +627,8 @@
 
             // Eğitmen ekle
             const addTrainer = (day, session, trainer) => {
+                if (!trainer) return;
+                
                 const key = `${selectedYear}-${selectedMonth + 1}-${day}`;
                 const newData = { ...calendarData };
 
@@ -619,13 +642,8 @@
 
                 if (!newData[key][session].includes(trainer)) {
                     newData[key][session].push(trainer);
-                }
-
-                setCalendarData(newData);
-
-                if (database) {
-                    database.ref(`calendar/${key}`).set(newData[key]);
-                    syncToSheets();
+                    setCalendarData(newData);
+                    saveToDatabase(key, newData[key]);
                 }
             };
 
@@ -636,20 +654,9 @@
 
                 if (newData[key] && newData[key][session]) {
                     newData[key][session] = newData[key][session].filter(t => t !== trainer);
+                    setCalendarData(newData);
+                    saveToDatabase(key, newData[key]);
                 }
-
-                setCalendarData(newData);
-
-                if (database) {
-                    database.ref(`calendar/${key}`).set(newData[key]);
-                    syncToSheets();
-                }
-            };
-
-            // Filtrelenmiş eğitmenleri al
-            const getFilteredTrainers = (trainers) => {
-                if (!filterTrainer) return trainers;
-                return trainers.filter(t => t.includes(filterTrainer));
             };
 
             // İstatistikler hesapla
@@ -666,7 +673,7 @@
                     const dayData = calendarData[key];
 
                     if (dayData) {
-                        totalSessions += 2; // Sabah ve öğle
+                        totalSessions += 2;
 
                         if (dayData.morning && dayData.morning.length > 0) {
                             filledSessions++;
@@ -722,7 +729,7 @@
                     </div>
 
                     {syncStatus && (
-                        <div className={`sync-status ${syncStatus.includes('ediliyor') ? 'syncing' : ''}`}>
+                        <div className={`sync-status ${syncStatus.includes('hatası') ? 'error' : ''} ${syncStatus.includes('ediliyor') ? 'syncing' : ''}`}>
                             {syncStatus}
                         </div>
                     )}
@@ -809,13 +816,29 @@
         }
 
         function DayCell({ day, data, onAddTrainer, onRemoveTrainer, filterTrainer }) {
-            const [showMorningSuggestions, setShowMorningSuggestions] = useState(false);
-            const [showAfternoonSuggestions, setShowAfternoonSuggestions] = useState(false);
-            const [morningInput, setMorningInput] = useState('');
-            const [afternoonInput, setAfternoonInput] = useState('');
+            const [selectedMorningTrainer, setSelectedMorningTrainer] = useState('');
+            const [selectedAfternoonTrainer, setSelectedAfternoonTrainer] = useState('');
 
-            const filteredTrainers = (trainers) => {
-                return trainers.filter(t => !data?.morning?.includes(t) && !data?.afternoon?.includes(t));
+            const getAvailableTrainers = (currentSession) => {
+                const usedTrainers = [
+                    ...(data?.morning || []),
+                    ...(data?.afternoon || [])
+                ];
+                return TRAINERS.filter(t => !usedTrainers.includes(t));
+            };
+
+            const handleAddMorning = () => {
+                if (selectedMorningTrainer) {
+                    onAddTrainer(day.date, 'morning', selectedMorningTrainer);
+                    setSelectedMorningTrainer('');
+                }
+            };
+
+            const handleAddAfternoon = () => {
+                if (selectedAfternoonTrainer) {
+                    onAddTrainer(day.date, 'afternoon', selectedAfternoonTrainer);
+                    setSelectedAfternoonTrainer('');
+                }
             };
 
             return (
@@ -828,95 +851,81 @@
                     <div className="sessions">
                         {/* Sabah Seansı */}
                         <div className="session">
-                            <div className="session-time">🌅 Sabah</div>
+                            <div className="session-header">
+                                <div className="session-time">🌅 Sabah</div>
+                            </div>
                             <div className="trainers-list">
-                                {data?.morning?.filter(t => !filterTrainer || t.includes(filterTrainer)).map((trainer, idx) => (
+                                {data?.morning?.filter(t => !filterTrainer || t.toLowerCase().includes(filterTrainer.toLowerCase())).map((trainer, idx) => (
                                     <div key={idx} className="trainer-tag">
                                         <span>{trainer}</span>
                                         <button 
-                                            className="remove-btn"
+                                            className="btn btn-danger"
                                             onClick={() => onRemoveTrainer(day.date, 'morning', trainer)}
+                                            title="Eğitmeni Çıkar"
                                         >
-                                            ×
+                                            ✕
                                         </button>
                                     </div>
                                 ))}
                             </div>
-                            <div className="add-trainer" style={{ position: 'relative' }}>
-                                <input
-                                    type="text"
-                                    placeholder="+ Eğitmen ekle"
-                                    value={morningInput}
-                                    onChange={(e) => setMorningInput(e.target.value)}
-                                    onFocus={() => setShowMorningSuggestions(true)}
-                                    onBlur={() => setTimeout(() => setShowMorningSuggestions(false), 200)}
-                                />
-                                {showMorningSuggestions && morningInput && (
-                                    <div className="trainer-suggestions">
-                                        {filteredTrainers(TRAINERS)
-                                            .filter(t => t.toLowerCase().includes(morningInput.toLowerCase()))
-                                            .map((trainer, idx) => (
-                                                <div 
-                                                    key={idx}
-                                                    className="trainer-suggestion"
-                                                    onClick={() => {
-                                                        onAddTrainer(day.date, 'morning', trainer);
-                                                        setMorningInput('');
-                                                    }}
-                                                >
-                                                    {trainer}
-                                                </div>
-                                            ))
-                                        }
-                                    </div>
-                                )}
+                            <div className="add-trainer-section">
+                                <select 
+                                    value={selectedMorningTrainer}
+                                    onChange={(e) => setSelectedMorningTrainer(e.target.value)}
+                                >
+                                    <option value="">Eğitmen seçin...</option>
+                                    {getAvailableTrainers('morning').map((trainer, idx) => (
+                                        <option key={idx} value={trainer}>{trainer}</option>
+                                    ))}
+                                </select>
+                                <button 
+                                    className="btn btn-success"
+                                    onClick={handleAddMorning}
+                                    disabled={!selectedMorningTrainer}
+                                    style={{width: '100%'}}
+                                >
+                                    ➕ Eğitmen Ekle
+                                </button>
                             </div>
                         </div>
 
                         {/* Öğle Seansı */}
                         <div className="session">
-                            <div className="session-time">🌆 Öğle</div>
+                            <div className="session-header">
+                                <div className="session-time">🌆 Öğle</div>
+                            </div>
                             <div className="trainers-list">
-                                {data?.afternoon?.filter(t => !filterTrainer || t.includes(filterTrainer)).map((trainer, idx) => (
+                                {data?.afternoon?.filter(t => !filterTrainer || t.toLowerCase().includes(filterTrainer.toLowerCase())).map((trainer, idx) => (
                                     <div key={idx} className="trainer-tag">
                                         <span>{trainer}</span>
                                         <button 
-                                            className="remove-btn"
+                                            className="btn btn-danger"
                                             onClick={() => onRemoveTrainer(day.date, 'afternoon', trainer)}
+                                            title="Eğitmeni Çıkar"
                                         >
-                                            ×
+                                            ✕
                                         </button>
                                     </div>
                                 ))}
                             </div>
-                            <div className="add-trainer" style={{ position: 'relative' }}>
-                                <input
-                                    type="text"
-                                    placeholder="+ Eğitmen ekle"
-                                    value={afternoonInput}
-                                    onChange={(e) => setAfternoonInput(e.target.value)}
-                                    onFocus={() => setShowAfternoonSuggestions(true)}
-                                    onBlur={() => setTimeout(() => setShowAfternoonSuggestions(false), 200)}
-                                />
-                                {showAfternoonSuggestions && afternoonInput && (
-                                    <div className="trainer-suggestions">
-                                        {filteredTrainers(TRAINERS)
-                                            .filter(t => t.toLowerCase().includes(afternoonInput.toLowerCase()))
-                                            .map((trainer, idx) => (
-                                                <div 
-                                                    key={idx}
-                                                    className="trainer-suggestion"
-                                                    onClick={() => {
-                                                        onAddTrainer(day.date, 'afternoon', trainer);
-                                                        setAfternoonInput('');
-                                                    }}
-                                                >
-                                                    {trainer}
-                                                </div>
-                                            ))
-                                        }
-                                    </div>
-                                )}
+                            <div className="add-trainer-section">
+                                <select 
+                                    value={selectedAfternoonTrainer}
+                                    onChange={(e) => setSelectedAfternoonTrainer(e.target.value)}
+                                >
+                                    <option value="">Eğitmen seçin...</option>
+                                    {getAvailableTrainers('afternoon').map((trainer, idx) => (
+                                        <option key={idx} value={trainer}>{trainer}</option>
+                                    ))}
+                                </select>
+                                <button 
+                                    className="btn btn-success"
+                                    onClick={handleAddAfternoon}
+                                    disabled={!selectedAfternoonTrainer}
+                                    style={{width: '100%'}}
+                                >
+                                    ➕ Eğitmen Ekle
+                                </button>
                             </div>
                         </div>
                     </div>
