@@ -127,6 +127,15 @@
             box-shadow: 0 5px 15px rgba(79, 172, 254, 0.4);
         }
 
+        .btn-warning {
+            background: linear-gradient(135deg, #ffa726 0%, #fb8c00 100%);
+        }
+
+        .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 167, 38, 0.4);
+        }
+
         .btn-danger {
             background: linear-gradient(135deg, #ff4757 0%, #ff3838 100%);
             font-size: 0.85em;
@@ -291,30 +300,6 @@
             font-size: 0.85em;
             margin-bottom: 8px;
             background: white;
-        }
-
-        .trainer-suggestions {
-            position: absolute;
-            background: white;
-            border: 2px solid #667eea;
-            border-radius: 6px;
-            margin-top: 5px;
-            max-height: 200px;
-            overflow-y: auto;
-            z-index: 1000;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-            width: 100%;
-        }
-
-        .trainer-suggestion {
-            padding: 10px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .trainer-suggestion:hover {
-            background: #667eea;
-            color: white;
         }
 
         .modal {
@@ -484,6 +469,50 @@
             border-left-color: #f44336;
         }
 
+        .trainer-management {
+            padding: 20px;
+        }
+
+        .add-trainer-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .add-trainer-form input {
+            flex: 1;
+        }
+
+        .trainer-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .trainer-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+
+        .trainer-item:hover {
+            border-color: #667eea;
+            box-shadow: 0 3px 10px rgba(102, 126, 234, 0.2);
+        }
+
+        .trainer-item-name {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #333;
+        }
+
         @media (max-width: 768px) {
             .days, .weekdays {
                 grid-template-columns: repeat(2, 1fr);
@@ -535,9 +564,6 @@
             console.error("Firebase initialization error:", error);
         }
 
-        // Eğitmenler listesi
-        const TRAINERS = ["Elif Egüz", "Simay Beliç", "Elif Gözde Özel Akman", "Zeliha Bayraktar", "Zeynep İris Bilen", "Turgay Bekşen", "Bülent Eren", "Soner Altıkulaç"];
-
         // Türkçe gün isimleri
         const WEEKDAYS = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'];
         const MONTHS = [
@@ -549,12 +575,34 @@
             const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
             const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
             const [calendarData, setCalendarData] = useState({});
+            const [trainers, setTrainers] = useState([]);
             const [filterTrainer, setFilterTrainer] = useState('');
             const [showReport, setShowReport] = useState(false);
+            const [showTrainerManagement, setShowTrainerManagement] = useState(false);
             const [syncStatus, setSyncStatus] = useState('');
             const [loading, setLoading] = useState(true);
 
-            // Firebase'den veri yükleme
+            // Firebase'den eğitmenleri yükleme
+            useEffect(() => {
+                if (!database) return;
+
+                const trainersRef = database.ref('trainers');
+                trainersRef.on('value', (snapshot) => {
+                    const data = snapshot.val();
+                    if (data && Array.isArray(data)) {
+                        setTrainers(data);
+                    } else {
+                        // İlk kez çalıştırılıyorsa varsayılan eğitmenleri ekle
+                        const defaultTrainers = ["Elif Egüz", "Simay Beliç", "Elif Gözde Özel Akman", "Zeliha Bayraktar", "Zeynep İris Bilen", "Turgay Bekşen", "Bülent Eren", "Soner Altıkulaç"];
+                        database.ref('trainers').set(defaultTrainers);
+                        setTrainers(defaultTrainers);
+                    }
+                });
+
+                return () => trainersRef.off();
+            }, []);
+
+            // Firebase'den takvim verilerini yükleme
             useEffect(() => {
                 if (!database) return;
 
@@ -583,6 +631,42 @@
                             console.error("Firebase save error:", error);
                         });
                 }
+            };
+
+            // Eğitmen ekle
+            const addTrainerToList = (newTrainer) => {
+                if (!newTrainer || newTrainer.trim() === '') return;
+                if (trainers.includes(newTrainer)) {
+                    alert('Bu eğitmen zaten listede var!');
+                    return;
+                }
+                
+                const updatedTrainers = [...trainers, newTrainer];
+                database.ref('trainers').set(updatedTrainers)
+                    .then(() => {
+                        setSyncStatus("✓ Eğitmen eklendi");
+                        setTimeout(() => setSyncStatus(''), 3000);
+                    })
+                    .catch((error) => {
+                        setSyncStatus("✗ Hata: " + error.message);
+                    });
+            };
+
+            // Eğitmen sil
+            const removeTrainerFromList = (trainerToRemove) => {
+                if (!confirm(`"${trainerToRemove}" isimli eğitmeni silmek istediğinize emin misiniz?`)) {
+                    return;
+                }
+
+                const updatedTrainers = trainers.filter(t => t !== trainerToRemove);
+                database.ref('trainers').set(updatedTrainers)
+                    .then(() => {
+                        setSyncStatus("✓ Eğitmen silindi");
+                        setTimeout(() => setSyncStatus(''), 3000);
+                    })
+                    .catch((error) => {
+                        setSyncStatus("✗ Hata: " + error.message);
+                    });
             };
 
             // Takvim günlerini oluştur
@@ -625,7 +709,7 @@
                        date.getFullYear() === today.getFullYear();
             };
 
-            // Eğitmen ekle
+            // Eğitmen ekle (takvime)
             const addTrainer = (day, session, trainer) => {
                 if (!trainer) return;
                 
@@ -647,7 +731,7 @@
                 }
             };
 
-            // Eğitmen sil
+            // Eğitmen sil (takvimden)
             const removeTrainer = (day, session, trainer) => {
                 const key = `${selectedYear}-${selectedMonth + 1}-${day}`;
                 const newData = { ...calendarData };
@@ -729,7 +813,7 @@
                     </div>
 
                     {syncStatus && (
-                        <div className={`sync-status ${syncStatus.includes('hatası') ? 'error' : ''} ${syncStatus.includes('ediliyor') ? 'syncing' : ''}`}>
+                        <div className={`sync-status ${syncStatus.includes('hatası') || syncStatus.includes('Hata') ? 'error' : ''} ${syncStatus.includes('ediliyor') ? 'syncing' : ''}`}>
                             {syncStatus}
                         </div>
                     )}
@@ -767,6 +851,10 @@
                             📊 Rapor Göster
                         </button>
 
+                        <button className="btn btn-warning" onClick={() => setShowTrainerManagement(true)}>
+                            👥 Eğitmen Yönetimi
+                        </button>
+
                         <button className="btn btn-secondary" onClick={() => {
                             setSelectedMonth(new Date().getMonth());
                             setSelectedYear(new Date().getFullYear());
@@ -793,6 +881,7 @@
                                         key={idx}
                                         day={day}
                                         data={calendarData[`${selectedYear}-${selectedMonth + 1}-${day.date}`]}
+                                        trainers={trainers}
                                         onAddTrainer={addTrainer}
                                         onRemoveTrainer={removeTrainer}
                                         filterTrainer={filterTrainer}
@@ -811,11 +900,19 @@
                         month={MONTHS[selectedMonth]}
                         year={selectedYear}
                     />
+
+                    <TrainerManagementModal
+                        show={showTrainerManagement}
+                        onClose={() => setShowTrainerManagement(false)}
+                        trainers={trainers}
+                        onAddTrainer={addTrainerToList}
+                        onRemoveTrainer={removeTrainerFromList}
+                    />
                 </div>
             );
         }
 
-        function DayCell({ day, data, onAddTrainer, onRemoveTrainer, filterTrainer }) {
+        function DayCell({ day, data, trainers, onAddTrainer, onRemoveTrainer, filterTrainer }) {
             const [selectedMorningTrainer, setSelectedMorningTrainer] = useState('');
             const [selectedAfternoonTrainer, setSelectedAfternoonTrainer] = useState('');
 
@@ -824,7 +921,7 @@
                     ...(data?.morning || []),
                     ...(data?.afternoon || [])
                 ];
-                return TRAINERS.filter(t => !usedTrainers.includes(t));
+                return trainers.filter(t => !usedTrainers.includes(t));
             };
 
             const handleAddMorning = () => {
@@ -926,6 +1023,61 @@
                                 >
                                     ➕ Eğitmen Ekle
                                 </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function TrainerManagementModal({ show, onClose, trainers, onAddTrainer, onRemoveTrainer }) {
+            const [newTrainerName, setNewTrainerName] = useState('');
+
+            const handleAdd = () => {
+                if (newTrainerName.trim()) {
+                    onAddTrainer(newTrainerName.trim());
+                    setNewTrainerName('');
+                }
+            };
+
+            if (!show) return null;
+
+            return (
+                <div className="modal active">
+                    <div className="modal-content">
+                        <div className="modal-header">
+                            <h2>👥 Eğitmen Yönetimi</h2>
+                            <button className="close-btn" onClick={onClose}>×</button>
+                        </div>
+
+                        <div className="trainer-management">
+                            <h3 style={{marginBottom: '15px', color: '#667eea'}}>Yeni Eğitmen Ekle</h3>
+                            <div className="add-trainer-form">
+                                <input
+                                    type="text"
+                                    placeholder="Eğitmen adı ve soyadı..."
+                                    value={newTrainerName}
+                                    onChange={(e) => setNewTrainerName(e.target.value)}
+                                    onKeyPress={(e) => e.key === 'Enter' && handleAdd()}
+                                />
+                                <button className="btn btn-success" onClick={handleAdd}>
+                                    ➕ Ekle
+                                </button>
+                            </div>
+
+                            <h3 style={{marginBottom: '15px', color: '#667eea'}}>Mevcut Eğitmenler ({trainers.length})</h3>
+                            <div className="trainer-list">
+                                {trainers.map((trainer, idx) => (
+                                    <div key={idx} className="trainer-item">
+                                        <span className="trainer-item-name">{trainer}</span>
+                                        <button 
+                                            className="btn btn-danger"
+                                            onClick={() => onRemoveTrainer(trainer)}
+                                        >
+                                            🗑️ Sil
+                                        </button>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     </div>
