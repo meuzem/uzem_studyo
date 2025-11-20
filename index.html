@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>UZEM Stüdyo Takvimi - Stüdyo Çekim Planlama</title>
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -12,630 +12,763 @@
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
   <style>
-body {font-family: 'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);padding:20px;min-height:100vh;}
-.container {max-width:1400px;margin: 0 auto;background: white;border-radius: 20px;box-shadow:0 20px 60px rgba(0,0,0,0.3);overflow: hidden;}
-.header {background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:white;padding:30px;text-align:center;}
-.header h1 {font-size:2.5em;margin-bottom:10px;text-shadow:2px 2px 4px rgba(0,0,0,0.2);}
-.header p {font-size:1.1em;opacity:.9;}
-.controls {display: flex;
-  flex-wrap: nowrap;
-  align-items: center;
-  gap: 15px;
-  background: #f8f9fa;
-  padding: 8px 5px 6px 5px;
-  border-bottom: 3px solid #667eea;
-  min-width: 0;
-  overflow-x: auto;
-  justify-content: center; }
-.controls select, .controls input, .controls button {
-  font-size: 2 em !important;
-  padding: 4px 8px !important;
-  border-radius: 7 px !important;
-  margin: 0 !important;
-  min-width: 0;
-  width: auto;
-  max-width: 200px;
-}
-.controls input[type="text"] { width: 88px !important; }
-.controls label { display: none; }
-@media (max-width:900px) {
-  .controls { flex-wrap: wrap; gap:10px; justify-content:center; }
-}
-.control-group {display:flex;align-items:center;gap:10px;}
-.control-group label {font-weight:600;color:#333;}
-select, input {padding:12px 20px;border:2px solid #ddd;border-radius:10px;font-size:1em;transition:all .3s;background:white;}
-select:focus, input:focus {outline:none;border-color:#667eea;box-shadow:0 0 0 3px rgba(102,126,234,.1);}
-.btn {padding:12px 24px;border:none;border-radius:10px;font-size:1em;font-weight:600;cursor:pointer;transition:all .3s;color:white;}
-.btn-primary {background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);}
-.btn-primary:hover {transform:translateY(-2px);box-shadow:0 5px 15px rgba(102,126,234,.4);}
-.btn-secondary {background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);}
-.btn-secondary:hover {transform:translateY(-2px);box-shadow:0 5px 15px rgba(245,87,108,.4);}
-.btn-success {background:linear-gradient(135deg,#4facfe 0%,#00f2fe 100%);font-size:.9em;padding:8px 16px;}
-.btn-success:hover {transform:translateY(-2px);box-shadow:0 5px 15px rgba(79,172,254,.4);}
-.btn-warning {background:linear-gradient(135deg,#ffa726 0%,#fb8c00 100%);}
-.btn-warning:hover {transform:translateY(-2px);box-shadow:0 5px 15px rgba(255,167,38,.4);}
-.btn-danger {background:linear-gradient(135deg,#ff4757 0%,#ff3838 100%);font-size:.85em;padding:4px 10px;margin-left:auto;}
-.btn-danger:hover {transform:scale(1.05);box-shadow:0 3px 10px rgba(255,71,87,.4);}
-.btn-excel {background: linear-gradient(135deg, #34c759 0%, #1abc9c 100%); color: white;font-weight: bold;}
-.btn-excel:hover {background: linear-gradient(135deg, #1abc9c 0%, #34c759 100%);}
-.calendar {padding:30px;}
-.calendar-header {text-align:center;margin-bottom:30px;font-size:2em;color:#333;font-weight:700;}
-.weekdays {display:grid;grid-template-columns:repeat(5, 1fr);gap:15px;margin-bottom:15px;}
-.weekday {text-align:center;font-weight:700;padding:15px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;border-radius:10px;font-size:1.1em;}
-.days {display:grid;grid-template-columns:repeat(5,1fr);gap:15px;}
-.day {border:2px solid #e0e0e0;border-radius:15px;min-height:180px;padding:15px;background:white;transition:all .3s;position:relative;}
-.day:hover {border-color:#667eea;box-shadow:0 5px 20px rgba(102,126,234,0.2);transform:translateY(-3px);}
-.day.empty {background:#f8f9fa;border-color:transparent;}
-.day.today {background: linear-gradient(135deg,#e3f2fd 0%,#bbdefb 100%);border-color:#2196f3;border-width:3px;}
-.day-header {display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;padding-bottom:10px;border-bottom:2px solid #eee;}
-.day-number {font-size:1.8em;font-weight:700;color:#667eea;}
-.day-name {font-size:.9em;color:#666;font-weight:600;}
-.sessions {display:flex;flex-direction:column;gap:10px;}
-.session {background:#f8f9fa;padding:10px;border-radius:8px;border-left:4px solid #667eea;}
-.session-header {display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
-.session-time {font-weight:600;color:#667eea;font-size:.9em;}
-.trainers-list {display:flex;flex-direction:column;gap:5px;margin-bottom:10px;}
-.trainer-tag {padding:6px 10px;background:white;border-radius:6px;font-size:.85em;border:1px solid #ddd;display:flex;justify-content:space-between;align-items:center;animation:slideIn .3s ease-out;}
-@keyframes slideIn {from{opacity:0;transform:translateX(-10px);}to{opacity:1;transform:translateX(0);}}
-.add-trainer-section {margin-top:10px;}
-.add-trainer-section select {width:100%;padding:8px;border:2px solid #667eea;border-radius:6px;font-size:.85em;margin-bottom:8px;background:white;}
-.modal {display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);z-index:2000;justify-content:center;align-items:center;backdrop-filter:blur(5px);}
-.modal.active {display:flex;}
-.modal-content {background:white;padding:40px;border-radius:20px;max-width:800px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);animation:modalSlideIn .3s ease-out;}
-@keyframes modalSlideIn {from{opacity:0;transform:translateY(-50px);}to{opacity:1;transform:translateY(0);}}
-.modal-header {display:flex;justify-content:space-between;align-items:center;margin-bottom:30px;padding-bottom:20px;border-bottom:3px solid #667eea;}
-.modal-header h2 {font-size:2em;color:#333;}
-.close-btn {background:#ff4757;color:white;border:none;width:40px;height:40px;border-radius:50%;font-size:1.5em;cursor:pointer;transition:all .3s;}
-.close-btn:hover {background:#ff3838;transform:rotate(90deg);}
-.report-section {margin-bottom:30px;}
-.report-section h3 {color:#667eea;margin-bottom:15px;font-size:1.5em;}
-.stats-grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;margin-bottom:30px;}
-.stat-card {background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;padding:25px;border-radius:15px;text-align:center;box-shadow:0 5px 15px rgba(102,126,234,0.3);}
-.stat-value {font-size:3em;font-weight:700;margin-bottom:10px;}
-.stat-label {font-size:1em;opacity:0.9;}
-.chart-container {position:relative;height:400px;margin-top:20px;}
-.trainer-details {display:grid;gap:10px;}
-.trainer-row {display:flex;justify-content:space-between;padding:15px;background:#f8f9fa;border-radius:10px;border-left:4px solid #667eea;}
-.trainer-name {font-weight:600;color:#333;}
-.trainer-count {font-weight:700;color:#667eea;font-size:1.2em;}
-.loading {text-align:center;padding:50px;font-size:1.2em;color:#667eea;}
-.sync-status {padding:15px;background:#e8f5e9;border-left:4px solid #4caf50;border-radius:8px;margin:20px 30px;display:flex;align-items:center;gap:10px;}
-.sync-status.syncing {background:#fff3e0;border-left-color:#ff9800;}
-.sync-status.error {background:#ffebee;border-left-color:#f44336;}
-.trainer-management {padding:20px;}
-.add-trainer-form {display:flex;gap:10px;margin-bottom:30px;padding:20px;background:#f8f9fa;border-radius:10px;}
-.add-trainer-form input {flex:1;}
-.trainer-list {display:grid;gap:10px;}
-.trainer-item {display:flex;justify-content:space-between;align-items:center;padding:15px;background:white;border:2px solid #e0e0e0;border-radius:10px;transition:all .3s;}
-.trainer-item:hover {border-color:#667eea;box-shadow:0 3px 10px rgba(102,126,234,0.2);}
-.trainer-item-name {font-size:1.1em;font-weight:600;color:#333;}
-@media (max-width:768px){
-.days,.weekdays{grid-template-columns:repeat(2,1fr);}
-.header h1{font-size:1.8em;}
-.controls{flex-direction:column;}
-.control-group{width:100%;}
-select,input{width:100%;}}
-</style>
+    /* Temel Reset */
+    * { box-sizing: border-box; }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 20px;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px;
+      text-align: center;
+    }
+    .header h1 { font-size: 2.5em; margin: 0 0 10px 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
+    .header p { font-size: 1.1em; opacity: .9; margin: 0; }
+
+    /* Controls Alanı */
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 15px;
+      background: #f8f9fa;
+      padding: 15px;
+      border-bottom: 3px solid #667eea;
+      justify-content: center;
+    }
+    
+    .control-group { display: flex; align-items: center; gap: 10px; }
+    .control-group label { font-weight: 600; color: #333; white-space: nowrap; }
+    
+    select, input {
+      padding: 10px 15px;
+      border: 2px solid #ddd;
+      border-radius: 10px;
+      font-size: 1em;
+      background: white;
+      transition: all .3s;
+    }
+    select:focus, input:focus { outline: none; border-color: #667eea; }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 10px;
+      font-size: 1em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .3s;
+      color: white;
+      white-space: nowrap;
+    }
+    .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .btn-secondary { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+    .btn-success { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); padding: 8px 16px; font-size: .9em; }
+    .btn-warning { background: linear-gradient(135deg, #ffa726 0%, #fb8c00 100%); }
+    .btn-excel { background: linear-gradient(135deg, #34c759 0%, #1abc9c 100%); }
+    .btn-danger { 
+      background: linear-gradient(135deg, #ff4757 0%, #ff3838 100%); 
+      padding: 4px 8px; 
+      font-size: 0.8em; 
+      margin-left: auto;
+    }
+
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+
+    /* Takvim Grid Yapısı */
+    .calendar { padding: 30px; }
+    .calendar-header { text-align: center; margin-bottom: 30px; font-size: 2em; color: #333; font-weight: 700; }
+    
+    .weekdays {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+    .weekday {
+      text-align: center;
+      font-weight: 700;
+      padding: 15px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 10px;
+    }
+
+    .days {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 15px;
+    }
+
+    .day {
+      border: 2px solid #e0e0e0;
+      border-radius: 15px;
+      min-height: 180px;
+      padding: 15px;
+      background: white;
+      transition: all .3s;
+      display: flex;
+      flex-direction: column;
+    }
+    .day:hover { border-color: #667eea; box-shadow: 0 5px 20px rgba(102,126,234,0.2); transform: translateY(-3px); }
+    .day.empty { background: #f8f9fa; border-color: transparent; }
+    .day.today { background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border-color: #2196f3; border-width: 3px; }
+
+    .day-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #eee;
+    }
+    .day-number { font-size: 1.5em; font-weight: 700; color: #667eea; }
+    .day-name { font-size: .9em; color: #666; font-weight: 600; }
+
+    .sessions { display: flex; flex-direction: column; gap: 10px; flex-grow: 1; }
+    .session { background: #f8f9fa; padding: 10px; border-radius: 8px; border-left: 4px solid #667eea; }
+    .session-time { font-weight: 600; color: #667eea; font-size: .9em; margin-bottom: 8px; display: block;}
+
+    .trainers-list { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
+    .trainer-tag {
+      padding: 6px 8px;
+      background: white;
+      border-radius: 6px;
+      font-size: .85em;
+      border: 1px solid #ddd;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      word-break: break-word;
+    }
+
+    .add-trainer-section select { width: 100%; margin-bottom: 5px; }
+    .add-trainer-section .btn { width: 100%; }
+
+    /* Modals */
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,.7); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+    .modal.active { display: flex; }
+    .modal-content { background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 800px; max-height: 90vh; overflow-y: auto; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 15px; }
+    .close-btn { background: #ff4757; color: white; border: none; width: 35px; height: 35px; border-radius: 50%; font-size: 1.2em; cursor: pointer; }
+    
+    /* Rapor Kartları */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px; }
+    .stat-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 15px; text-align: center; }
+    .stat-value { font-size: 2em; font-weight: bold; }
+    
+    .trainer-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border: 1px solid #eee; margin-bottom: 5px; border-radius: 8px; }
+    .add-trainer-form { display: flex; gap: 10px; margin-bottom: 20px; }
+    .add-trainer-form input { flex: 1; }
+
+    .sync-status { padding: 10px; margin: 10px; border-radius: 8px; font-size: 0.9em; text-align: center; }
+    .sync-status.error { background: #ffebee; color: #c62828; }
+    .sync-status.syncing { background: #fff3e0; color: #ef6c00; }
+    
+    .chart-container { position: relative; height: 300px; width: 100%; }
+
+    /* --- MOBİL UYUMLULUK (RESPONSIVE) --- */
+    @media (max-width: 1024px) {
+        .weekdays, .days { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    @media (max-width: 768px) {
+        body { padding: 10px; }
+        .container { border-radius: 10px; }
+        .header { padding: 20px 10px; }
+        .header h1 { font-size: 1.8em; }
+        
+        /* Üst kontrol panelini mobilde alt alta diz */
+        .controls { flex-direction: column; align-items: stretch; }
+        .control-group { flex-direction: column; align-items: stretch; }
+        .control-group label { margin-bottom: 5px; }
+        .controls .btn, .controls select, .controls input { width: 100%; max-width: none; }
+        
+        .calendar { padding: 15px; }
+        .calendar-header { font-size: 1.5em; margin-bottom: 20px; }
+
+        /* Mobilde üstteki Gün isimlerini (Pzt, Sal...) gizle. 
+           Çünkü kartlar alt alta inince bu şerit kaymaya sebep olur. */
+        .weekdays { display: none; }
+
+        /* Günleri tek sütuna düşür */
+        .days { grid-template-columns: 1fr; }
+        
+        .day { min-height: auto; }
+        /* Boş günleri mobilde gizle ki yer kaplamasın */
+        .day.empty { display: none; }
+        
+        .add-trainer-form { flex-direction: column; }
+        .modal-content { padding: 20px; width: 95%; }
+    }
+  </style>
+</head>
 <body>
-<div id="root"></div>
-<script type="text/babel">
-const {useState, useEffect, useRef} = React;
-const firebaseConfig = {
-    apiKey: "AIzaSyAct3aFMa_lAXNFJ-vE350xA0SrkOw-5H4",
-    authDomain: "uzem-studyo-plan-613da.firebaseapp.com",
-    databaseURL: "https://uzem-studyo-plan-613da-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "uzem-studyo-plan-613da",
-    storageBucket: "uzem-studyo-plan-613da.firebasestorage.app",
-    messagingSenderId: "362923630393",
-    appId: "1:362923630393:web:d360ba7ef4dae96b35d2e8",
-    measurementId: "G-2FTF6RZ6V1"
-};
-let firebaseApp;
-let database;
-try { firebaseApp = firebase.initializeApp(firebaseConfig); database = firebase.database();}
-catch (error) {console.error("Firebase initialization error:", error);}
-const WEEKDAYS = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'];
-const MONTHS = [
-    'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
-    'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
-];
-function App() {
-const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
-const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-const [calendarData, setCalendarData] = useState({});
-const [trainers, setTrainers] = useState([]);
-const [filterTrainer, setFilterTrainer] = useState('');
-const [showReport, setShowReport] = useState(false);
-const [showTrainerManagement, setShowTrainerManagement] = useState(false);
-const [syncStatus, setSyncStatus] = useState('');
-const [loading, setLoading] = useState(true);
-useEffect(() => {
-    if (!database) return;
-    const trainersRef = database.ref('trainers');
-    trainersRef.on('value', (snapshot) => {
-        const data = snapshot.val();
-        if (data && Array.isArray(data)) setTrainers(data);
-        else {
-            const defaultTrainers = ["Elif Egüz", "Simay Beliç", "Elif Gözde Özel Akman", "Zeliha Bayraktar", "Zeynep İris Bilen", "Turgay Bekşen", "Bülent Eren", "Soner Altıkulaç"];
-            database.ref('trainers').set(defaultTrainers);
-            setTrainers(defaultTrainers);
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const {useState, useEffect, useRef} = React;
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyAct3aFMa_lAXNFJ-vE350xA0SrkOw-5H4",
+        authDomain: "uzem-studyo-plan-613da.firebaseapp.com",
+        databaseURL: "https://uzem-studyo-plan-613da-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "uzem-studyo-plan-613da",
+        storageBucket: "uzem-studyo-plan-613da.firebasestorage.app",
+        messagingSenderId: "362923630393",
+        appId: "1:362923630393:web:d360ba7ef4dae96b35d2e8",
+        measurementId: "G-2FTF6RZ6V1"
+    };
+
+    let firebaseApp;
+    let database;
+    try { 
+        if (!firebase.apps.length) {
+            firebaseApp = firebase.initializeApp(firebaseConfig);
+        } else {
+            firebaseApp = firebase.app();
         }
-    }); return () => trainersRef.off();
-}, []);
-useEffect(() => {
-    if (!database) return;
-    const dataRef = database.ref('calendar');
-    dataRef.on('value', (snapshot) => {
-        const data = snapshot.val() || {}; setCalendarData(data);
-        setLoading(false);setSyncStatus("✓ Veriler senkronize edildi");
-        setTimeout(() => setSyncStatus(''), 3000);
-    }); return () => dataRef.off();
-}, []);
-const saveToDatabase = (key, data) => {
-    if (database) {
-        database.ref(`calendar/${key}`).set(data)
-            .then(() => { setSyncStatus("✓ Firebase'e kaydedildi");
-            setTimeout(() => setSyncStatus(''), 3000);})
-            .catch((error) => {setSyncStatus("✗ Kaydetme hatası: " + error.message);
-            console.error("Firebase save error:", error); });
+        database = firebase.database();
+    } catch (error) {
+        console.error("Firebase initialization error:", error);
     }
-};
-const addTrainerToList = (newTrainer) => {
-    if (!newTrainer || newTrainer.trim() === '') return;
-    if (trainers.includes(newTrainer)) return alert('Bu eğitmen zaten listede var!');
-    const updatedTrainers = [...trainers, newTrainer];
-    database.ref('trainers').set(updatedTrainers)
-        .then(()=>{ setSyncStatus("✓ Eğitmen eklendi");
-            setTimeout(() => setSyncStatus(''), 3000); })
-        .catch((error)=>setSyncStatus("✗ Hata: "+error.message));
-};
-const removeTrainerFromList = (trainerToRemove) => {
-    if (!confirm(`"${trainerToRemove}" isimli eğitmeni silmek istediğinize emin misiniz?`)) return;
-    const updatedTrainers = trainers.filter(t => t !== trainerToRemove);
-    database.ref('trainers').set(updatedTrainers)
-        .then(()=>{ setSyncStatus("✓ Eğitmen silindi"); setTimeout(() => setSyncStatus(''), 3000); })
-        .catch((error)=>setSyncStatus("✗ Hata: "+error.message));
-};
-const generateCalendarDays = () => {
-    const firstDay = new Date(selectedYear, selectedMonth, 1);
-    const lastDay = new Date(selectedYear, selectedMonth + 1, 0);
-    const days = []; let firstWeekday = firstDay.getDay() - 1;
-    if (firstWeekday < 0) firstWeekday = 6; if (firstWeekday >= 5) firstWeekday = 0;
-    for (let i=0;i<firstWeekday;i++) days.push(null);
-    for (let day=1;day<=lastDay.getDate();day++) {
-        const date=new Date(selectedYear,selectedMonth,day);
-        const weekday=date.getDay();
-        if (weekday>=1 && weekday<=5) {
-            days.push({ date:day, weekday:WEEKDAYS[weekday-1], isToday:isToday(date)});
-        }
-    }
-    return days;
-};
-const isToday = (date) => {
-    const today = new Date();
-    return date.getDate() === today.getDate() &&
-        date.getMonth() === today.getMonth() &&
-        date.getFullYear() === today.getFullYear();
-};
-const addTrainer = (day, session, trainer) => {
-    if (!trainer) return;
-    const key = `${selectedYear}-${selectedMonth + 1}-${day}`;
-    const newData = { ...calendarData };
-    if (!newData[key]) newData[key] = { morning: [], afternoon: [] };
-    if (!newData[key][session]) newData[key][session] = [];
-    if (!newData[key][session].includes(trainer)) {
-        newData[key][session].push(trainer);
-        setCalendarData(newData); saveToDatabase(key, newData[key]);
-    }
-};
-const removeTrainer = (day, session, trainer) => {
-    const key = `${selectedYear}-${selectedMonth + 1}-${day}`;
-    const newData = { ...calendarData };
-    if (newData[key] && newData[key][session]) {
-        newData[key][session] = newData[key][session].filter(t => t !== trainer);
-        setCalendarData(newData); saveToDatabase(key, newData[key]);
-    }
-};
-const calculateStats = () => {
-    const days = generateCalendarDays();
-    let totalSessions=0; let filledSessions=0; const trainerCounts={};
-    days.forEach(day=>{
-        if (!day) return;
-        const key = `${selectedYear}-${selectedMonth + 1}-${day.date}`;
-        const dayData = calendarData[key];
-        if (dayData) {
-            totalSessions += 2;
-            if (dayData.morning && dayData.morning.length > 0) {
-                filledSessions++;
-                dayData.morning.forEach(trainer => {
-                    trainerCounts[trainer] = (trainerCounts[trainer] || 0) + 1;
-                });
-            }
-            if (dayData.afternoon && dayData.afternoon.length > 0) {
-                filledSessions++;
-                dayData.afternoon.forEach(trainer => {
-                    trainerCounts[trainer] = (trainerCounts[trainer] || 0) + 1;
-                });
-            }
-        } else totalSessions += 2;
-    });
-    const emptySessions=totalSessions-filledSessions;
-    const occupancyRate=totalSessions>0 ? ((filledSessions/totalSessions)*100).toFixed(1) : 0;
-    return {totalDays:days.filter(d=>d).length,totalSessions,filledSessions,emptySessions,occupancyRate,trainerCounts};
-};
-const days = generateCalendarDays();
-const stats = calculateStats();
 
-let visibleDays = days;
-if (filterTrainer) {
-  visibleDays = days.filter(day => {
-      if (!day) return false;
-      const key = `${selectedYear}-${selectedMonth+1}-${day.date}`;
-      const d = calendarData[key];
-      if (!d) return false;
-      return (
-         (d.morning && d.morning.some(t => t.toLowerCase().includes(filterTrainer.toLowerCase())))
-         || (d.afternoon && d.afternoon.some(t => t.toLowerCase().includes(filterTrainer.toLowerCase())))
-      );
-  });
-}
+    const WEEKDAYS = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'];
+    const MONTHS = [
+        'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
+        'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
+    ];
 
-const handleExportExcel = () => {
-    const wb = XLSX.utils.book_new();
-    const ws_data = [["Tarih", "Gün", "Sabah", "Öğle"]];
-    visibleDays.filter(d=>d).forEach(day=>{
-        const key = `${selectedYear}-${selectedMonth + 1}-${day.date}`;
-        const dayData = calendarData[key] || {};
-        ws_data.push([
-            `${day.date}.${selectedMonth+1}.${selectedYear}`,
-            day.weekday,
-            (dayData.morning || []).join(", "),
-            (dayData.afternoon || []).join(", ")
-        ]);
-    });
-    const ws = XLSX.utils.aoa_to_sheet(ws_data);
-    ws['!cols'] = [{wch:12},{wch:14},{wch:34},{wch:34}];
-    XLSX.utils.book_append_sheet(wb, ws, "Takvim");
-    XLSX.writeFile(wb, `UZEM-Takvim_${MONTHS[selectedMonth]}${selectedYear}.xlsx`);
-};
+    function App() {
+        const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+        const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+        const [calendarData, setCalendarData] = useState({});
+        const [trainers, setTrainers] = useState([]);
+        const [filterTrainer, setFilterTrainer] = useState('');
+        const [showReport, setShowReport] = useState(false);
+        const [showTrainerManagement, setShowTrainerManagement] = useState(false);
+        const [syncStatus, setSyncStatus] = useState('');
+        const [loading, setLoading] = useState(true);
 
-if (loading) return (
-  <div className="container">
-    <div className="header">
-      <h1>🎬 UZEM Stüdyo Takvimi</h1>
-      <p>Stüdyo Çekim Planlama Sistemi</p>
-    </div>
-    <div className="loading">Yükleniyor...</div>
-  </div>
-);
-
-return (
-<div className="container">
-  <div className="header">
-    <h1>🎬 UZEM Stüdyo Takvimi</h1>
-    <p>Stüdyo Çekim Planlama Sistemi</p>
-  </div>
-
-  {syncStatus && (
-    <div className={`sync-status ${syncStatus.includes('hatası') || syncStatus.includes('Hata') ? 'error' : ''} ${syncStatus.includes('ediliyor') ? 'syncing' : ''}`}>
-      {syncStatus}
-    </div>
-  )}
-
-  <div className="controls">
-    <div className="control-group">
-        <label>📅 Ay:</label>
-        <select value={selectedMonth} onChange={(e) => setSelectedMonth(parseInt(e.target.value))}>
-            {MONTHS.map((month, idx) => (
-                <option key={idx} value={idx}>{month}</option>
-            ))}
-        </select>
-    </div>
-    <div className="control-group">
-        <label>📆 Yıl:</label>
-        <select value={selectedYear} onChange={(e) => setSelectedYear(parseInt(e.target.value))}>
-            {[2024, 2025, 2026].map(year => (
-                <option key={year} value={year}>{year}</option>
-            ))}
-        </select>
-    </div>
-    <div className="control-group">
-        <label>🔍 Filtre:</label>
-        <input
-            type="text"
-            placeholder="Eğitmen ara..."
-            value={filterTrainer}
-            onChange={e => setFilterTrainer(e.target.value)}
-        />
-        {filterTrainer &&
-          <button onClick={()=>setFilterTrainer("")} style={{marginLeft:"5px",background:"#eee",color:"#7b7b7b",border:"none",padding:"6px 11px",borderRadius:"6px",fontSize:"1em",cursor:"pointer"}} title="Temizle">❌</button>
-        }
-    </div>
-    <button className="btn btn-secondary"
-        onClick={() => {
-            setSelectedMonth(new Date().getMonth());
-            setSelectedYear(new Date().getFullYear());
-        }}>
-        🔄 Bugün
-    </button>
-    <button className="btn btn-warning"
-        onClick={() => setShowTrainerManagement(true)}>
-        👥 Eğitmen Yönetimi
-    </button>
-    <button className="btn btn-excel" onClick={handleExportExcel} title="Takvimi Excel olarak indir">🟢 Excel</button>
-    <button className="btn btn-primary" onClick={() => setShowReport(true)}>
-        📊 Rapor
-    </button>
-  </div>
-
-  <div className="calendar">
-    <div className="calendar-header">
-        {MONTHS[selectedMonth]} {selectedYear}
-    </div>
-    <div className="weekdays">
-        {WEEKDAYS.map(day => (
-            <div key={day} className="weekday">{day}</div>
-        ))}
-    </div>
-    <div className="days">
-      {visibleDays.map((day, idx) => (
-        day ? (
-            <DayCell
-                key={idx}
-                day={day}
-                data={calendarData[`${selectedYear}-${selectedMonth + 1}-${day.date}`]}
-                trainers={trainers}
-                onAddTrainer={addTrainer}
-                onRemoveTrainer={removeTrainer}
-                filterTrainer={filterTrainer}
-            />
-        ) : (
-            !filterTrainer && <div key={idx} className="day empty"></div>
-        )
-      ))}
-    </div>
-  </div>
-
-  <ReportModal 
-    show={showReport} 
-    onClose={() => setShowReport(false)}
-    stats={stats}
-    month={MONTHS[selectedMonth]}
-    year={selectedYear}
-  />
-  <TrainerManagementModal
-    show={showTrainerManagement}
-    onClose={() => setShowTrainerManagement(false)}
-    trainers={trainers}
-    onAddTrainer={addTrainerToList}
-    onRemoveTrainer={removeTrainerFromList}
-  />
-</div>
-);}
-function DayCell({ day, data, trainers, onAddTrainer, onRemoveTrainer, filterTrainer }) {
-const [selectedMorningTrainer, setSelectedMorningTrainer] = useState('');
-const [selectedAfternoonTrainer, setSelectedAfternoonTrainer] = useState('');
-const getAvailableTrainers = (currentSession) => {
-    const usedTrainers = (data && data[currentSession]) ? data[currentSession] : [];
-    return trainers.filter(t => !usedTrainers.includes(t));
-};
-const handleAddMorning = () => {
-    if (selectedMorningTrainer) {
-        onAddTrainer(day.date, 'morning', selectedMorningTrainer);
-        setSelectedMorningTrainer('');
-    }
-};
-const handleAddAfternoon = () => {
-    if (selectedAfternoonTrainer) {
-        onAddTrainer(day.date, 'afternoon', selectedAfternoonTrainer);
-        setSelectedAfternoonTrainer('');
-    }
-};
-// Filtre varsa, sadece ilgili eğitmen(leri) ve ait olduğu seansları göster
-const filteredMorning = filterTrainer
-  ? (data?.morning || []).filter(t => t.toLowerCase().includes(filterTrainer.toLowerCase()))
-  : data?.morning || [];
-const filteredAfternoon = filterTrainer
-  ? (data?.afternoon || []).filter(t => t.toLowerCase().includes(filterTrainer.toLowerCase()))
-  : data?.afternoon || [];
-if (filterTrainer && filteredMorning.length === 0 && filteredAfternoon.length === 0) {
-      return null; // Takvimde göstermemek için!
-}
-return (
-<div className={`day ${day.isToday ? 'today' : ''}`}>
-    <div className="day-header">
-        <div className="day-number">{day.date}</div>
-        <div className="day-name">{day.weekday}</div>
-    </div>
-    <div className="sessions">
-      <div className="session">
-        <div className="session-header">
-            <div className="session-time">🌅 Sabah</div>
-        </div>
-        <div className="trainers-list">
-            {filteredMorning.map((trainer, idx) => (
-                <div key={idx} className="trainer-tag">
-                    <span>{trainer}</span>
-                    <button 
-                        className="btn btn-danger"
-                        onClick={() => onRemoveTrainer(day.date, 'morning', trainer)}
-                        title="Eğitmeni Çıkar"
-                    >✕
-                    </button>
-                </div>
-            ))}
-        </div>
-        <div className="add-trainer-section">
-            <select 
-                value={selectedMorningTrainer}
-                onChange={(e) => setSelectedMorningTrainer(e.target.value)}
-            >
-                <option value="">Eğitmen seçin...</option>
-                {getAvailableTrainers('morning').map((trainer, idx) => (
-                    <option key={idx} value={trainer}>{trainer}</option>
-                ))}
-            </select>
-            <button 
-                className="btn btn-success"
-                onClick={handleAddMorning}
-                disabled={!selectedMorningTrainer}
-                style={{width: '100%'}}
-            >
-                ➕ Eğitmen Ekle
-            </button>
-        </div>
-      </div>
-      <div className="session">
-        <div className="session-header">
-            <div className="session-time">🌆 Öğle</div>
-        </div>
-        <div className="trainers-list">
-            {filteredAfternoon.map((trainer, idx) => (
-                <div key={idx} className="trainer-tag">
-                    <span>{trainer}</span>
-                    <button 
-                        className="btn btn-danger"
-                        onClick={() => onRemoveTrainer(day.date, 'afternoon', trainer)}
-                        title="Eğitmeni Çıkar"
-                    >✕
-                    </button>
-                </div>
-            ))}
-        </div>
-        <div className="add-trainer-section">
-            <select 
-                value={selectedAfternoonTrainer}
-                onChange={(e) => setSelectedAfternoonTrainer(e.target.value)}
-            >
-                <option value="">Eğitmen seçin...</option>
-                {getAvailableTrainers('afternoon').map((trainer, idx) => (
-                    <option key={idx} value={trainer}>{trainer}</option>
-                ))}
-            </select>
-            <button 
-                className="btn btn-success"
-                onClick={handleAddAfternoon}
-                disabled={!selectedAfternoonTrainer}
-                style={{width: '100%'}}
-            >
-                ➕ Eğitmen Ekle
-            </button>
-        </div>
-      </div>
-    </div>
-</div>
-);}
-function TrainerManagementModal({ show, onClose, trainers, onAddTrainer, onRemoveTrainer }) {
-  const [newTrainerName, setNewTrainerName] = useState('');
-  const handleAdd = () => { if (newTrainerName.trim()) {onAddTrainer(newTrainerName.trim());setNewTrainerName('');}};
-  if (!show) return null;
-  return (
-    <div className="modal active">
-      <div className="modal-content">
-        <div className="modal-header">
-          <h2>👥 Eğitmen Yönetimi</h2>
-          <button className="close-btn" onClick={onClose}>×</button>
-        </div>
-        <div className="trainer-management">
-          <h3 style={{marginBottom:'15px',color:'#667eea'}}>Yeni Eğitmen Ekle</h3>
-          <div className="add-trainer-form">
-            <input
-              type="text"
-              placeholder="Eğitmen adı ve soyadı..."
-              value={newTrainerName}
-              onChange={e => setNewTrainerName(e.target.value)}
-              onKeyPress={e => e.key==='Enter' && handleAdd()}
-            />
-            <button className="btn btn-success" onClick={handleAdd}>
-              ➕ Ekle
-            </button>
-          </div>
-          <h3 style={{marginBottom:'15px',color:'#667eea'}}>Mevcut Eğitmenler ({trainers.length})</h3>
-          <div className="trainer-list">
-            {trainers.map((trainer, idx) => (
-              <div key={idx} className="trainer-item">
-                <span className="trainer-item-name">{trainer}</span>
-                <button 
-                  className="btn btn-danger"
-                  onClick={() => onRemoveTrainer(trainer)}
-                >🗑️ Sil</button>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-function ReportModal({ show, onClose, stats, month, year }) {
-    const chartRef = useRef(null);const chartInstance = useRef(null);
-    useEffect(() => {
-        if (show && chartRef.current) {
-            const ctx = chartRef.current.getContext('2d');
-            if(chartInstance.current) chartInstance.current.destroy();
-            chartInstance.current = new Chart(ctx, {
-                type: 'pie',
-                data: {
-                    labels: ['Dolu Seans', 'Boş Seans'],
-                    datasets: [{
-                        label: 'Seans Doluluk',
-                        data: [stats.filledSessions, stats.emptySessions],
-                        backgroundColor: [
-                            'rgba(102, 126, 234, 0.85)',
-                            'rgba(245, 87, 108, 0.80)'
-                        ],
-                        borderColor: [
-                            'rgba(102, 126, 234, 1)',
-                            'rgba(245, 87, 108, 1)'
-                        ],
-                        borderWidth:2
-                    }]
-                },
-                options: {
-                    responsive:true,
-                    plugins: {
-                        legend: {display:true, position:'bottom'}
-                    }
+        useEffect(() => {
+            if (!database) return;
+            const trainersRef = database.ref('trainers');
+            trainersRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data && Array.isArray(data)) setTrainers(data);
+                else {
+                    const defaultTrainers = ["Elif Egüz", "Simay Beliç", "Elif Gözde Özel Akman", "Zeliha Bayraktar", "Zeynep İris Bilen", "Turgay Bekşen", "Bülent Eren", "Soner Altıkulaç"];
+                    database.ref('trainers').set(defaultTrainers);
+                    setTrainers(defaultTrainers);
                 }
+            }); 
+            return () => trainersRef.off();
+        }, []);
+
+        useEffect(() => {
+            if (!database) return;
+            const dataRef = database.ref('calendar');
+            dataRef.on('value', (snapshot) => {
+                const data = snapshot.val() || {}; 
+                setCalendarData(data);
+                setLoading(false);
+                setSyncStatus("✓ Veriler senkronize edildi");
+                setTimeout(() => setSyncStatus(''), 3000);
+            }); 
+            return () => dataRef.off();
+        }, []);
+
+        const saveToDatabase = (key, data) => {
+            if (database) {
+                database.ref(`calendar/${key}`).set(data)
+                    .then(() => { 
+                        setSyncStatus("✓ Kaydedildi");
+                        setTimeout(() => setSyncStatus(''), 3000);
+                    })
+                    .catch((error) => {
+                        setSyncStatus("✗ Hata: " + error.message);
+                        console.error("Firebase save error:", error); 
+                    });
+            }
+        };
+
+        const addTrainerToList = (newTrainer) => {
+            if (!newTrainer || newTrainer.trim() === '') return;
+            if (trainers.includes(newTrainer)) return alert('Bu eğitmen zaten listede var!');
+            const updatedTrainers = [...trainers, newTrainer];
+            database.ref('trainers').set(updatedTrainers)
+                .then(()=>{ setSyncStatus("✓ Eğitmen eklendi"); setTimeout(() => setSyncStatus(''), 3000); })
+                .catch((error)=>setSyncStatus("✗ Hata: "+error.message));
+        };
+
+        const removeTrainerFromList = (trainerToRemove) => {
+            if (!confirm(`"${trainerToRemove}" isimli eğitmeni silmek istediğinize emin misiniz?`)) return;
+            const updatedTrainers = trainers.filter(t => t !== trainerToRemove);
+            database.ref('trainers').set(updatedTrainers)
+                .then(()=>{ setSyncStatus("✓ Eğitmen silindi"); setTimeout(() => setSyncStatus(''), 3000); })
+                .catch((error)=>setSyncStatus("✗ Hata: "+error.message));
+        };
+
+        const generateCalendarDays = () => {
+            const firstDay = new Date(selectedYear, selectedMonth, 1);
+            const lastDay = new Date(selectedYear, selectedMonth + 1, 0);
+            const days = []; 
+            let firstWeekday = firstDay.getDay() - 1;
+            if (firstWeekday < 0) firstWeekday = 6; 
+            // Eğer Cumartesi(5) veya Pazar(6) ise haftasonu mantığına göre ayarla (veya sadece haftaiçi gösterimi)
+            // Burada mevcut kod sadece Pazartesi-Cuma gösteriyor (weekday 0..4 arası indexliyor)
+            // Mevcut mantığı koruyoruz:
+            
+            for (let i=0; i<firstWeekday; i++) days.push(null);
+            
+            for (let day=1; day<=lastDay.getDate(); day++) {
+                const date = new Date(selectedYear, selectedMonth, day);
+                const weekday = date.getDay();
+                // 1=Pzt ... 5=Cuma
+                if (weekday >= 1 && weekday <= 5) {
+                    days.push({ date: day, weekday: WEEKDAYS[weekday-1], isToday: isToday(date)});
+                }
+            }
+            return days;
+        };
+
+        const isToday = (date) => {
+            const today = new Date();
+            return date.getDate() === today.getDate() &&
+                date.getMonth() === today.getMonth() &&
+                date.getFullYear() === today.getFullYear();
+        };
+
+        const addTrainer = (day, session, trainer) => {
+            if (!trainer) return;
+            const key = `${selectedYear}-${selectedMonth + 1}-${day}`;
+            const newData = { ...calendarData };
+            if (!newData[key]) newData[key] = { morning: [], afternoon: [] };
+            if (!newData[key][session]) newData[key][session] = [];
+            if (!newData[key][session].includes(trainer)) {
+                newData[key][session].push(trainer);
+                setCalendarData(newData); 
+                saveToDatabase(key, newData[key]);
+            }
+        };
+
+        const removeTrainer = (day, session, trainer) => {
+            const key = `${selectedYear}-${selectedMonth + 1}-${day}`;
+            const newData = { ...calendarData };
+            if (newData[key] && newData[key][session]) {
+                newData[key][session] = newData[key][session].filter(t => t !== trainer);
+                setCalendarData(newData); 
+                saveToDatabase(key, newData[key]);
+            }
+        };
+
+        const calculateStats = () => {
+            const days = generateCalendarDays();
+            let totalSessions=0; let filledSessions=0; const trainerCounts={};
+            days.forEach(day=>{
+                if (!day) return;
+                const key = `${selectedYear}-${selectedMonth + 1}-${day.date}`;
+                const dayData = calendarData[key];
+                if (dayData) {
+                    totalSessions += 2;
+                    if (dayData.morning && dayData.morning.length > 0) {
+                        filledSessions++;
+                        dayData.morning.forEach(trainer => {
+                            trainerCounts[trainer] = (trainerCounts[trainer] || 0) + 1;
+                        });
+                    }
+                    if (dayData.afternoon && dayData.afternoon.length > 0) {
+                        filledSessions++;
+                        dayData.afternoon.forEach(trainer => {
+                            trainerCounts[trainer] = (trainerCounts[trainer] || 0) + 1;
+                        });
+                    }
+                } else totalSessions += 2;
+            });
+            const emptySessions = totalSessions - filledSessions;
+            const occupancyRate = totalSessions > 0 ? ((filledSessions/totalSessions)*100).toFixed(1) : 0;
+            return {totalDays:days.filter(d=>d).length, totalSessions, filledSessions, emptySessions, occupancyRate, trainerCounts};
+        };
+
+        const days = generateCalendarDays();
+        const stats = calculateStats();
+
+        let visibleDays = days;
+        if (filterTrainer) {
+            visibleDays = days.filter(day => {
+                if (!day) return false;
+                const key = `${selectedYear}-${selectedMonth+1}-${day.date}`;
+                const d = calendarData[key];
+                if (!d) return false;
+                return (
+                    (d.morning && d.morning.some(t => t.toLowerCase().includes(filterTrainer.toLowerCase())))
+                    || (d.afternoon && d.afternoon.some(t => t.toLowerCase().includes(filterTrainer.toLowerCase())))
+                );
             });
         }
-        return () => { if (chartInstance.current) chartInstance.current.destroy();};
-    }, [show, stats]);
-    if (!show) return null;
-    return (
-        <div className="modal active">
-            <div className="modal-content">
-                <div className="modal-header">
-                    <h2>📊 {month} {year} Raporu</h2>
-                    <button className="close-btn" onClick={onClose}>×</button>
+
+        const handleExportExcel = () => {
+            const wb = XLSX.utils.book_new();
+            const ws_data = [["Tarih", "Gün", "Sabah", "Öğle"]];
+            visibleDays.filter(d=>d).forEach(day=>{
+                const key = `${selectedYear}-${selectedMonth + 1}-${day.date}`;
+                const dayData = calendarData[key] || {};
+                ws_data.push([
+                    `${day.date}.${selectedMonth+1}.${selectedYear}`,
+                    day.weekday,
+                    (dayData.morning || []).join(", "),
+                    (dayData.afternoon || []).join(", ")
+                ]);
+            });
+            const ws = XLSX.utils.aoa_to_sheet(ws_data);
+            ws['!cols'] = [{wch:12},{wch:14},{wch:34},{wch:34}];
+            XLSX.utils.book_append_sheet(wb, ws, "Takvim");
+            XLSX.writeFile(wb, `UZEM-Takvim_${MONTHS[selectedMonth]}${selectedYear}.xlsx`);
+        };
+
+        if (loading) return (
+            <div className="container">
+                <div className="header">
+                    <h1>🎬 UZEM Stüdyo Takvimi</h1>
                 </div>
-                <div className="stats-grid">
-                    <div className="stat-card">
-                        <div className="stat-value">{stats.totalDays}</div>
-                        <div className="stat-label">Toplam Gün</div>
-                    </div>
-                    <div className="stat-card">
-                        <div className="stat-value">{stats.filledSessions}</div>
-                        <div className="stat-label">Dolu Seans</div>
-                    </div>
-                    <div className="stat-card">
-                        <div className="stat-value">{stats.emptySessions}</div>
-                        <div className="stat-label">Boş Seans</div>
-                    </div>
-                    <div className="stat-card">
-                        <div className="stat-value">{stats.occupancyRate}%</div>
-                        <div className="stat-label">Doluluk Oranı</div>
-                    </div>
+                <div className="loading" style={{textAlign:'center', padding:'50px'}}>Yükleniyor...</div>
+            </div>
+        );
+
+        return (
+        <div className="container">
+            <div className="header">
+                <h1>🎬 UZEM Stüdyo Takvimi</h1>
+                <p>Stüdyo Çekim Planlama Sistemi</p>
+            </div>
+
+            {syncStatus && (
+                <div className={`sync-status ${syncStatus.includes('hatası') || syncStatus.includes('Hata') ? 'error' : ''} ${syncStatus.includes('ediliyor') ? 'syncing' : ''}`}>
+                    {syncStatus}
                 </div>
-                <div className="report-section">
-                    <h3>Grafik: Dolu / Boş Seans Oranları</h3>
-                    <div className="chart-container"><canvas ref={chartRef}></canvas></div>
+            )}
+
+            <div className="controls">
+                <div className="control-group">
+                    <label>📅 Ay:</label>
+                    <select value={selectedMonth} onChange={(e) => setSelectedMonth(parseInt(e.target.value))}>
+                        {MONTHS.map((month, idx) => (
+                            <option key={idx} value={idx}>{month}</option>
+                        ))}
+                    </select>
+                </div>
+                <div className="control-group">
+                    <label>📆 Yıl:</label>
+                    <select value={selectedYear} onChange={(e) => setSelectedYear(parseInt(e.target.value))}>
+                        {[2024, 2025, 2026].map(year => (
+                            <option key={year} value={year}>{year}</option>
+                        ))}
+                    </select>
+                </div>
+                <div className="control-group">
+                    <label>🔍 Filtre:</label>
+                    <input
+                        type="text"
+                        placeholder="Eğitmen ara..."
+                        value={filterTrainer}
+                        onChange={e => setFilterTrainer(e.target.value)}
+                    />
+                    {filterTrainer &&
+                        <button onClick={()=>setFilterTrainer("")} className="btn btn-danger" title="Temizle">❌</button>
+                    }
+                </div>
+                <button className="btn btn-secondary"
+                    onClick={() => {
+                        setSelectedMonth(new Date().getMonth());
+                        setSelectedYear(new Date().getFullYear());
+                    }}>
+                    🔄 Bugün
+                </button>
+                <button className="btn btn-warning"
+                    onClick={() => setShowTrainerManagement(true)}>
+                    👥 Yönetim
+                </button>
+                <button className="btn btn-excel" onClick={handleExportExcel} title="Excel İndir">🟢 Excel</button>
+                <button className="btn btn-primary" onClick={() => setShowReport(true)}>
+                    📊 Rapor
+                </button>
+            </div>
+
+            <div className="calendar">
+                <div className="calendar-header">
+                    {MONTHS[selectedMonth]} {selectedYear}
+                </div>
+                <div className="weekdays">
+                    {WEEKDAYS.map(day => (
+                        <div key={day} className="weekday">{day}</div>
+                    ))}
+                </div>
+                <div className="days">
+                    {visibleDays.map((day, idx) => (
+                        day ? (
+                            <DayCell
+                                key={idx}
+                                day={day}
+                                data={calendarData[`${selectedYear}-${selectedMonth + 1}-${day.date}`]}
+                                trainers={trainers}
+                                onAddTrainer={addTrainer}
+                                onRemoveTrainer={removeTrainer}
+                                filterTrainer={filterTrainer}
+                            />
+                        ) : (
+                            !filterTrainer && <div key={idx} className="day empty"></div>
+                        )
+                    ))}
                 </div>
             </div>
+
+            <ReportModal 
+                show={showReport} 
+                onClose={() => setShowReport(false)}
+                stats={stats}
+                month={MONTHS[selectedMonth]}
+                year={selectedYear}
+            />
+            <TrainerManagementModal
+                show={showTrainerManagement}
+                onClose={() => setShowTrainerManagement(false)}
+                trainers={trainers}
+                onAddTrainer={addTrainerToList}
+                onRemoveTrainer={removeTrainerFromList}
+            />
         </div>
-    );
-}
-ReactDOM.render(<App />, document.getElementById('root'));
-</script>
+        );
+    }
+
+    function DayCell({ day, data, trainers, onAddTrainer, onRemoveTrainer, filterTrainer }) {
+        const [selectedMorningTrainer, setSelectedMorningTrainer] = useState('');
+        const [selectedAfternoonTrainer, setSelectedAfternoonTrainer] = useState('');
+
+        const getAvailableTrainers = (currentSession) => {
+            const usedTrainers = (data && data[currentSession]) ? data[currentSession] : [];
+            return trainers.filter(t => !usedTrainers.includes(t));
+        };
+
+        const handleAddMorning = () => {
+            if (selectedMorningTrainer) {
+                onAddTrainer(day.date, 'morning', selectedMorningTrainer);
+                setSelectedMorningTrainer('');
+            }
+        };
+
+        const handleAddAfternoon = () => {
+            if (selectedAfternoonTrainer) {
+                onAddTrainer(day.date, 'afternoon', selectedAfternoonTrainer);
+                setSelectedAfternoonTrainer('');
+            }
+        };
+
+        const filteredMorning = filterTrainer
+            ? (data?.morning || []).filter(t => t.toLowerCase().includes(filterTrainer.toLowerCase()))
+            : data?.morning || [];
+
+        const filteredAfternoon = filterTrainer
+            ? (data?.afternoon || []).filter(t => t.toLowerCase().includes(filterTrainer.toLowerCase()))
+            : data?.afternoon || [];
+
+        if (filterTrainer && filteredMorning.length === 0 && filteredAfternoon.length === 0) {
+            return null;
+        }
+
+        return (
+            <div className={`day ${day.isToday ? 'today' : ''}`}>
+                <div className="day-header">
+                    <div className="day-number">{day.date}</div>
+                    <div className="day-name">{day.weekday}</div>
+                </div>
+                <div className="sessions">
+                    <div className="session">
+                        <div className="session-header">
+                            <span className="session-time">🌅 Sabah</span>
+                        </div>
+                        <div className="trainers-list">
+                            {filteredMorning.map((trainer, idx) => (
+                                <div key={idx} className="trainer-tag">
+                                    <span>{trainer}</span>
+                                    <button 
+                                        className="btn btn-danger"
+                                        onClick={() => onRemoveTrainer(day.date, 'morning', trainer)}
+                                    >✕
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="add-trainer-section">
+                            <select 
+                                value={selectedMorningTrainer}
+                                onChange={(e) => setSelectedMorningTrainer(e.target.value)}
+                            >
+                                <option value="">Eğitmen seç...</option>
+                                {getAvailableTrainers('morning').map((trainer, idx) => (
+                                    <option key={idx} value={trainer}>{trainer}</option>
+                                ))}
+                            </select>
+                            <button 
+                                className="btn btn-success"
+                                onClick={handleAddMorning}
+                                disabled={!selectedMorningTrainer}
+                            >
+                                ➕ Ekle
+                            </button>
+                        </div>
+                    </div>
+                    <div className="session">
+                        <div className="session-header">
+                            <span className="session-time">🌆 Öğle</span>
+                        </div>
+                        <div className="trainers-list">
+                            {filteredAfternoon.map((trainer, idx) => (
+                                <div key={idx} className="trainer-tag">
+                                    <span>{trainer}</span>
+                                    <button 
+                                        className="btn btn-danger"
+                                        onClick={() => onRemoveTrainer(day.date, 'afternoon', trainer)}
+                                    >✕
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="add-trainer-section">
+                            <select 
+                                value={selectedAfternoonTrainer}
+                                onChange={(e) => setSelectedAfternoonTrainer(e.target.value)}
+                            >
+                                <option value="">Eğitmen seç...</option>
+                                {getAvailableTrainers('afternoon').map((trainer, idx) => (
+                                    <option key={idx} value={trainer}>{trainer}</option>
+                                ))}
+                            </select>
+                            <button 
+                                className="btn btn-success"
+                                onClick={handleAddAfternoon}
+                                disabled={!selectedAfternoonTrainer}
+                            >
+                                ➕ Ekle
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    function TrainerManagementModal({ show, onClose, trainers, onAddTrainer, onRemoveTrainer }) {
+        const [newTrainerName, setNewTrainerName] = useState('');
+        const handleAdd = () => { if (newTrainerName.trim()) {onAddTrainer(newTrainerName.trim());setNewTrainerName('');}};
+        
+        if (!show) return null;
+        
+        return (
+            <div className="modal active">
+                <div className="modal-content">
+                    <div className="modal-header">
+                        <h2>👥 Eğitmen Yönetimi</h2>
+                        <button className="close-btn" onClick={onClose}>×</button>
+                    </div>
+                    <div className="trainer-management">
+                        <div className="add-trainer-form">
+                            <input
+                                type="text"
+                                placeholder="Ad Soyad"
+                                value={newTrainerName}
+                                onChange={e => setNewTrainerName(e.target.value)}
+                                onKeyPress={e => e.key==='Enter' && handleAdd()}
+                            />
+                            <button className="btn btn-success" onClick={handleAdd}>Ekle</button>
+                        </div>
+                        <div className="trainer-list">
+                            {trainers.map((trainer, idx) => (
+                                <div key={idx} className="trainer-item">
+                                    <span className="trainer-item-name">{trainer}</span>
+                                    <button className="btn btn-danger" onClick={() => onRemoveTrainer(trainer)}>Sil</button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    function ReportModal({ show, onClose, stats, month, year }) {
+        const chartRef = useRef(null);
+        const chartInstance = useRef(null);
+
+        useEffect(() => {
+            if (show && chartRef.current) {
+                const ctx = chartRef.current.getContext('2d');
+                if(chartInstance.current) chartInstance.current.destroy();
+                
+                chartInstance.current = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: ['Dolu Seans', 'Boş Seans'],
+                        datasets: [{
+                            data: [stats.filledSessions, stats.emptySessions],
+                            backgroundColor: ['rgba(102, 126, 234, 0.85)', 'rgba(245, 87, 108, 0.80)'],
+                            borderColor: ['rgba(102, 126, 234, 1)', 'rgba(245, 87, 108, 1)'],
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position:'bottom' } }
+                    }
+                });
+            }
+            return () => { if (chartInstance.current) chartInstance.current.destroy(); };
+        }, [show, stats]);
+
+        if (!show) return null;
+
+        return (
+            <div className="modal active">
+                <div className="modal-content">
+                    <div className="modal-header">
+                        <h2>📊 Rapor</h2>
+                        <button className="close-btn" onClick={onClose}>×</button>
+                    </div>
+                    <div className="stats-grid">
+                        <div className="stat-card">
+                            <div className="stat-value">{stats.filledSessions}</div>
+                            <div className="stat-label">Dolu</div>
+                        </div>
+                        <div className="stat-card">
+                            <div className="stat-value">{stats.occupancyRate}%</div>
+                            <div className="stat-label">Oran</div>
+                        </div>
+                    </div>
+                    <div className="report-section">
+                        <div className="chart-container"><canvas ref={chartRef}></canvas></div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
 </body>
 </html>
