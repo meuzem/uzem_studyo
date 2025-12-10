@@ -10,6 +10,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+ <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
   <style>
     /* Temel Reset */
@@ -245,6 +246,9 @@
             firebaseApp = firebase.app();
         }
         database = firebase.database();
+      firebase.auth().signInAnonymously().catch(function(error) {
+    console.error("Giriş hatası:", error);
+});
     } catch (error) {
         console.error("Firebase initialization error:", error);
     }
