@@ -559,150 +559,124 @@ database.ref('trainers').set(updatedTrainers)
         );
     }
 
-function DayCell({ day, data, trainers, onAddTrainer, onRemoveTrainer, filterTrainer }) {
-    const [selectedMorningTrainer, setSelectedMorningTrainer] = useState('');
-    const [selectedAfternoonTrainer, setSelectedAfternoonTrainer] = useState('');
-    
-    // Arama kutuları için yeni durumlar (state)
-    const [morningSearch, setMorningSearch] = useState('');
-    const [afternoonSearch, setAfternoonSearch] = useState('');
+    function DayCell({ day, data, trainers, onAddTrainer, onRemoveTrainer, filterTrainer }) {
+        const [selectedMorningTrainer, setSelectedMorningTrainer] = useState('');
+        const [selectedAfternoonTrainer, setSelectedAfternoonTrainer] = useState('');
 
-    // Listeyi hem filtreleyen hem de sıralayan fonksiyon
-    const getAvailableTrainers = (currentSession, searchQuery) => {
-        const usedTrainers = (data && data[currentSession]) ? data[currentSession] : [];
-        return trainers
-            .filter(t => !usedTrainers.includes(t)) // Zaten seçili olanları gizle
-            .filter(t => t.toLowerCase().includes(searchQuery.toLowerCase())) // Aramaya göre süz
-            .sort((a, b) => a.localeCompare('tr')); // Alfabetik sırala
-    };
+const getAvailableTrainers = (currentSession) => {
+    const usedTrainers = (data && data[currentSession]) ? data[currentSession] : [];
+    return trainers
+        .filter(t => !usedTrainers.includes(t))
+        .sort((a, b) => a.localeCompare('tr')); // Alfabetik sıralama satırı
+};
 
-    const handleAddMorning = () => {
-        if (selectedMorningTrainer) {
-            onAddTrainer(day.date, 'morning', selectedMorningTrainer);
-            setSelectedMorningTrainer('');
-            setMorningSearch(''); // Ekleme sonrası aramayı sıfırla
+        const handleAddMorning = () => {
+            if (selectedMorningTrainer) {
+                onAddTrainer(day.date, 'morning', selectedMorningTrainer);
+                setSelectedMorningTrainer('');
+            }
+        };
+
+        const handleAddAfternoon = () => {
+            if (selectedAfternoonTrainer) {
+                onAddTrainer(day.date, 'afternoon', selectedAfternoonTrainer);
+                setSelectedAfternoonTrainer('');
+            }
+        };
+
+        const filteredMorning = filterTrainer
+            ? (data?.morning || []).filter(t => t.toLowerCase().includes(filterTrainer.toLowerCase()))
+            : data?.morning || [];
+
+        const filteredAfternoon = filterTrainer
+            ? (data?.afternoon || []).filter(t => t.toLowerCase().includes(filterTrainer.toLowerCase()))
+            : data?.afternoon || [];
+
+        if (filterTrainer && filteredMorning.length === 0 && filteredAfternoon.length === 0) {
+            return null;
         }
-    };
 
-    const handleAddAfternoon = () => {
-        if (selectedAfternoonTrainer) {
-            onAddTrainer(day.date, 'afternoon', selectedAfternoonTrainer);
-            setSelectedAfternoonTrainer('');
-            setAfternoonSearch(''); // Ekleme sonrası aramayı sıfırla
-        }
-    };
-
-    const filteredMorning = filterTrainer
-        ? (data?.morning || []).filter(t => t.toLowerCase().includes(filterTrainer.toLowerCase()))
-        : data?.morning || [];
-    const filteredAfternoon = filterTrainer
-        ? (data?.afternoon || []).filter(t => t.toLowerCase().includes(filterTrainer.toLowerCase()))
-        : data?.afternoon || [];
-
-    if (filterTrainer && filteredMorning.length === 0 && filteredAfternoon.length === 0) {
-        return null;
+        return (
+            <div className={`day ${day.isToday ? 'today' : ''}`}>
+                <div className="day-header">
+                    <div className="day-number">{day.date}</div>
+                    <div className="day-name">{day.weekday}</div>
+                </div>
+                <div className="sessions">
+                    <div className="session">
+                        <div className="session-header">
+                            <span className="session-time">🌅 Sabah</span>
+                        </div>
+                        <div className="trainers-list">
+                            {filteredMorning.map((trainer, idx) => (
+                                <div key={idx} className="trainer-tag">
+                                    <span>{trainer}</span>
+                                    <button 
+                                        className="btn btn-danger"
+                                        onClick={() => onRemoveTrainer(day.date, 'morning', trainer)}
+                                    >✕
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="add-trainer-section">
+                            <select 
+                                value={selectedMorningTrainer}
+                                onChange={(e) => setSelectedMorningTrainer(e.target.value)}
+                            >
+                                <option value="">Eğitmen seç...</option>
+                                {getAvailableTrainers('morning').map((trainer, idx) => (
+                                    <option key={idx} value={trainer}>{trainer}</option>
+                                ))}
+                            </select>
+                            <button 
+                                className="btn btn-success"
+                                onClick={handleAddMorning}
+                                disabled={!selectedMorningTrainer}
+                            >
+                                ➕ Ekle
+                            </button>
+                        </div>
+                    </div>
+                    <div className="session">
+                        <div className="session-header">
+                            <span className="session-time">🌆 Öğle</span>
+                        </div>
+                        <div className="trainers-list">
+                            {filteredAfternoon.map((trainer, idx) => (
+                                <div key={idx} className="trainer-tag">
+                                    <span>{trainer}</span>
+                                    <button 
+                                        className="btn btn-danger"
+                                        onClick={() => onRemoveTrainer(day.date, 'afternoon', trainer)}
+                                    >✕
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="add-trainer-section">
+                            <select 
+                                value={selectedAfternoonTrainer}
+                                onChange={(e) => setSelectedAfternoonTrainer(e.target.value)}
+                            >
+                                <option value="">Eğitmen seç...</option>
+                                {getAvailableTrainers('afternoon').map((trainer, idx) => (
+                                    <option key={idx} value={trainer}>{trainer}</option>
+                                ))}
+                            </select>
+                            <button 
+                                className="btn btn-success"
+                                onClick={handleAddAfternoon}
+                                disabled={!selectedAfternoonTrainer}
+                            >
+                                ➕ Ekle
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
     }
-
-    return (
-        <div className={`day ${day.isToday ? 'today' : ''}`}>
-            <div className="day-header">
-                <div className="day-number">{day.date}</div>
-                <div className="day-name">{day.weekday}</div>
-            </div>
-            <div className="sessions">
-                {/* SABAH SEANSI */}
-                <div className="session">
-                    <div className="session-header">
-                        <span className="session-time"> 🌅  Sabah</span>
-                    </div>
-                    <div className="trainers-list">
-                        {filteredMorning.map((trainer, idx) => (
-                            <div key={idx} className="trainer-tag">
-                                <span>{trainer}</span>
-                                <button 
-                                    className="btn btn-danger"
-                                    onClick={() => onRemoveTrainer(day.date, 'morning', trainer)}
-                                > ✕
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                    <div className="add-trainer-section">
-                        {/* Arama Girişi */}
-                        <input 
-                            type="text" 
-                            placeholder="🔍 Ara..." 
-                            value={morningSearch}
-                            onChange={(e) => setMorningSearch(e.target.value)}
-                            style={{ width: '100%', marginBottom: '4px', padding: '5px', fontSize: '0.8em', borderRadius: '5px', border: '1px solid #ddd' }}
-                        />
-                        <select 
-                            value={selectedMorningTrainer}
-                            onChange={(e) => setSelectedMorningTrainer(e.target.value)}
-                        >
-                            <option value="">{morningSearch ? 'Bulunanlar...' : 'Eğitmen seç...'}</option>
-                            {getAvailableTrainers('morning', morningSearch).map((trainer, idx) => (
-                                <option key={idx} value={trainer}>{trainer}</option>
-                            ))}
-                        </select>
-                        <button 
-                            className="btn btn-success"
-                            onClick={handleAddMorning}
-                            disabled={!selectedMorningTrainer}
-                        >
-                             ➕  Ekle
-                        </button>
-                    </div>
-                </div>
-
-                {/* ÖĞLE SEANSI */}
-                <div className="session">
-                    <div className="session-header">
-                        <span className="session-time"> 🌆  Öğle</span>
-                    </div>
-                    <div className="trainers-list">
-                        {filteredAfternoon.map((trainer, idx) => (
-                            <div key={idx} className="trainer-tag">
-                                <span>{trainer}</span>
-                                <button 
-                                    className="btn btn-danger"
-                                    onClick={() => onRemoveTrainer(day.date, 'afternoon', trainer)}
-                                > ✕
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                    <div className="add-trainer-section">
-                        {/* Arama Girişi */}
-                        <input 
-                            type="text" 
-                            placeholder="🔍 Ara..." 
-                            value={afternoonSearch}
-                            onChange={(e) => setAfternoonSearch(e.target.value)}
-                            style={{ width: '100%', marginBottom: '4px', padding: '5px', fontSize: '0.8em', borderRadius: '5px', border: '1px solid #ddd' }}
-                        />
-                        <select 
-                            value={selectedAfternoonTrainer}
-                            onChange={(e) => setSelectedAfternoonTrainer(e.target.value)}
-                        >
-                            <option value="">{afternoonSearch ? 'Bulunanlar...' : 'Eğitmen seç...'}</option>
-                            {getAvailableTrainers('afternoon', afternoonSearch).map((trainer, idx) => (
-                                <option key={idx} value={trainer}>{trainer}</option>
-                            ))}
-                        </select>
-                        <button 
-                            className="btn btn-success"
-                            onClick={handleAddAfternoon}
-                            disabled={!selectedAfternoonTrainer}
-                        >
-                             ➕  Ekle
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-}
 
     function TrainerManagementModal({ show, onClose, trainers, onAddTrainer, onRemoveTrainer }) {
         const [newTrainerName, setNewTrainerName] = useState('');
