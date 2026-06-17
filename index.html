@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>UZEM Stüdyo Takvimi - Stüdyo Çekim Planlama</title>
   
-  <!-- Kütüphaneler (Babel tamamen kaldırıldı) -->
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -100,7 +99,6 @@
 
   <div id="root"></div>
 
-  <!-- BÜTÜN KODU SAF JAVASCRIPT / REACT 18 SCRIPTİNE ÇEVİRDİK -->
   <script>
     const { useState, useEffect, useMemo, useCallback, memo, useRef } = React;
 
@@ -247,7 +245,7 @@
       const handleExcel = () => {
         const data = [["Tarih", "Gün", "Sabah Seansı", "Öğle Seansı"]];
         filtered.filter(d => d).forEach(d => {
-          const dData = calData[`${year}-${month + 1}-${d.date}` ] || {};
+          const dData = calData[`${year}-${month + 1}-${d.date}`] || {};
           data.push([`${d.date}.${month+1}.${year}`, d.weekday, (dData.morning || []).join(", "), (dData.afternoon || []).join(", ")]);
         });
         const ws = XLSX.utils.aoa_to_sheet(data);
@@ -310,7 +308,7 @@
             React.createElement("button", { className: "btn btn-mgmt", onClick: handleAdd }, "Ekle")
           ),
           React.createElement("div", { style: { maxHeight: '400px', overflowY: 'auto' } },
-            trainers.map(t => React.createElement("div", { key: t, className: "trainer-tag" }, style: { padding: '10px', marginBottom: 8, position: 'relative' },
+            trainers.map(t => React.createElement("div", { key: t, className: "trainer-tag", style: { padding: '10px', marginBottom: 8, position: 'relative' } },
               React.createElement("span", null, t),
               React.createElement("button", { className: "btn btn-danger", onClick: () => setDeleting(t) }, "Sil"),
               deleting === t && React.createElement("div", { className: "delete-confirm-overlay" },
