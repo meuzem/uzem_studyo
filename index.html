@@ -4,15 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>UZEM Stüdyo Takvimi - Stüdyo Çekim Planlama</title>
-  <!-- Kütüphaneler -->
+  
+  <!-- Kütüphaneler (Babel tamamen kaldırıldı) -->
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  
   <style>
     * { box-sizing: border-box; }
     body {
@@ -38,7 +39,6 @@
     }
     .header h1 { font-size: 2.2em; margin: 0 0 10px 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
     .header p { font-size: 1.1em; opacity: .9; margin: 0; }
-    
     .controls {
       display: flex;
       flex-wrap: wrap;
@@ -49,11 +49,9 @@
       border-bottom: 3px solid #667eea;
       justify-content: center;
     }
-    
     .control-group { display: flex; align-items: center; gap: 8px; }
     select, input { padding: 8px 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 1em; background: white; outline: none; }
     select:focus, input:focus { border-color: #667eea; }
-    
     .btn {
       padding: 10px 18px;
       border: none;
@@ -73,42 +71,37 @@
     .btn-report { background-color: #673ab7; } 
     .btn-danger { background: #ff4757; padding: 4px 8px; font-size: 0.8em; }
     .btn-success { background: #4caf50; }
-
     .btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
-    
     .calendar { padding: 25px; }
     .calendar-header { text-align: center; margin-bottom: 25px; font-size: 2em; color: #333; font-weight: bold; }
     .weekdays { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-bottom: 12px; }
     .weekday { text-align: center; font-weight: bold; padding: 12px; background: #667eea; color: white; border-radius: 8px; }
-    
     .days { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; }
     .day { border: 1px solid #ddd; border-radius: 15px; min-height: 200px; padding: 12px; background: white; display: flex; flex-direction: column; }
     .day.today { border: 3px solid #2196f3; background: #f0f7ff; }
     .day-header { display: flex; justify-content: space-between; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
     .day-number { font-size: 1.4em; font-weight: bold; color: #667eea; }
-    
     .sessions { display: flex; flex-direction: column; gap: 10px; flex-grow: 1; }
     .session { background: #fafafa; padding: 8px; border-radius: 8px; border-left: 4px solid #667eea; }
     .session-time { font-weight: bold; color: #444; font-size: 0.85em; margin-bottom: 6px; display: block; }
     .trainer-tag { padding: 4px 8px; background: white; border: 1px solid #ddd; border-radius: 5px; font-size: 0.8em; display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-    
     .add-trainer-section { margin-top: 5px; display: flex; flex-direction: column; gap: 4px; }
     .add-trainer-section input { width: 100%; font-size: 0.75em; padding: 4px; border: 1px solid #ccc; border-radius: 4px; }
     .add-trainer-section select { width: 100%; font-size: 0.85em; padding: 4px; border: 1px solid #ccc; }
-
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
     .modal.active { display: flex; }
     .modal-content { background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 600px; max-height: 85vh; overflow-y: auto; position: relative; }
     .close-btn { position: absolute; top: 15px; right: 15px; background: #ff4757; color: white; border: none; width: 30px; height: 30px; border-radius: 50%; font-size: 1em; cursor: pointer; }
-    
     .delete-confirm-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.9); display: flex; align-items: center; justify-content: center; border-radius: 5px; gap: 10px; z-index: 5; }
-    
     @media (max-width: 768px) { .weekdays { display: none; } .days { grid-template-columns: 1fr; } .controls { flex-direction: column; align-items: stretch; } }
   </style>
 </head>
 <body>
+
   <div id="root"></div>
-<script type="text/javascript/babel" data-type="module">
+
+  <!-- BÜTÜN KODU SAF JAVASCRIPT / REACT 18 SCRIPTİNE ÇEVİRDİK -->
+  <script>
     const { useState, useEffect, useMemo, useCallback, memo, useRef } = React;
 
     const firebaseConfig = {
@@ -140,25 +133,21 @@
           .sort(trCollator.compare);
       }, [allTrainers, list, q]);
 
-      return (
-        <div className="session">
-          <span className="session-time">{icon} {title}</span>
-          <div className="trainers-list">
-            {list.map((t, i) => (
-              <div key={i} className="trainer-tag">
-                <span>{t}</span>
-                <button className="btn btn-danger" onClick={() => onRemove(t)}>✕</button>
-              </div>
-            ))}
-          </div>
-          <div className="add-trainer-section">
-            <input type="text" placeholder="🔍 Ara..." value={q} onChange={(e) => setQ(e.target.value)} />
-            <select value="" onChange={(e) => { if(e.target.value) { onAdd(e.target.value); setQ(""); } }}>
-              <option value="">{q ? "Bulunanlar..." : "Seçiniz..."}</option>
-              {avail.map((t, i) => <option key={i} value={t}>{t}</option>)}
-            </select>
-          </div>
-        </div>
+      return React.createElement("div", { className: "session" },
+        React.createElement("span", { className: "session-time" }, icon, " ", title),
+        React.createElement("div", { className: "trainers-list" },
+          list.map((t, i) => React.createElement("div", { key: i, className: "trainer-tag" },
+            React.createElement("span", null, t),
+            React.createElement("button", { className: "btn btn-danger", onClick: () => onRemove(t) }, "✕")
+          ))
+        ),
+        React.createElement("div", { className: "add-trainer-section" },
+          React.createElement("input", { type: "text", placeholder: "🔍 Ara...", value: q, onChange: (e) => setQ(e.target.value) }),
+          React.createElement("select", { value: "", onChange: (e) => { if(e.target.value) { onAdd(e.target.value); setQ(""); } } },
+            React.createElement("option", { value: "" }, q ? "Bulunanlar..." : "Seçiniz..."),
+            avail.map((t, i) => React.createElement("option", { key: i, value: t }, t))
+          )
+        )
       );
     });
 
@@ -172,17 +161,15 @@
         onUpdate(day.date, { ...curr, [sess]: list });
       }, [day.date, data, onUpdate]);
 
-      return (
-        <div className={`day ${day.isToday ? "today" : ""}`}>
-          <div className="day-header">
-            <span className="day-number">{day.date}</span>
-            <span style={{fontSize:'0.75em', color:'#777'}}>{day.weekday}</span>
-          </div>
-          <div className="sessions">
-            <SessionBox title="Sabah" icon="🌅" list={data?.morning || []} allTrainers={trainers} onAdd={v => handleAction("morning", v, true)} onRemove={v => handleAction("morning", v, false)} />
-            <SessionBox title="Öğle" icon="🌆" list={data?.afternoon || []} allTrainers={trainers} onAdd={v => handleAction("afternoon", v, true)} onRemove={v => handleAction("afternoon", v, false)} />
-          </div>
-        </div>
+      return React.createElement("div", { className: `day ${day.isToday ? "today" : ""}` },
+        React.createElement("div", { className: "day-header" },
+          React.createElement("span", { className: "day-number" }, day.date),
+          React.createElement("span", { style: { fontSize: '0.75em', color: '#777' } }, day.weekday)
+        ),
+        React.createElement("div", { className: "sessions" },
+          React.createElement(SessionBox, { title: "Sabah", icon: "🌅", list: data?.morning || [], allTrainers: trainers, onAdd: v => handleAction("morning", v, true), onRemove: v => handleAction("morning", v, false) }),
+          React.createElement(SessionBox, { title: "Öğle", icon: "🌆", list: data?.afternoon || [], allTrainers: trainers, onAdd: v => handleAction("afternoon", v, true), onRemove: v => handleAction("afternoon", v, false) })
+        )
       );
     });
 
@@ -260,7 +247,7 @@
       const handleExcel = () => {
         const data = [["Tarih", "Gün", "Sabah Seansı", "Öğle Seansı"]];
         filtered.filter(d => d).forEach(d => {
-          const dData = calData[`${year}-${month + 1}-${d.date}`] || {};
+          const dData = calData[`${year}-${month + 1}-${d.date}` ] || {};
           data.push([`${d.date}.${month+1}.${year}`, d.weekday, (dData.morning || []).join(", "), (dData.afternoon || []).join(", ")]);
         });
         const ws = XLSX.utils.aoa_to_sheet(data);
@@ -269,37 +256,30 @@
         XLSX.writeFile(wb, `UZEM_Takvim_${MONTHS[month]}_${year}.xlsx`);
       };
 
-      if (loading) return <div style={{textAlign:'center', padding:'100px', color:'white', fontSize:'1.5em'}}>🎬 UZEM Takvimi Hazırlanıyor...</div>;
+      if (loading) return React.createElement("div", { style: { textAlign: 'center', padding: '100px', color: 'white', fontSize: '1.5em' } }, "🎬 UZEM Takvimi Hazırlanıyor...");
 
-      return (
-        <div className="container">
-          <div className="header"><h1>🎬 UZEM Stüdyo Takvimi</h1><p>Stüdyo Çekim Planlama Sistemi</p></div>
-          <div className="controls">
-            <div className="control-group">
-              <select value={month} onChange={e => setMonth(Number(e.target.value))}>{MONTHS.map((m, i) => <option key={i} value={i}>{m}</option>)}</select>
-              {/* YIL SEÇENEKLERİ 2030'A KADAR KESİNLEŞTİRİLDİ */}
-              <select value={year} onChange={e => setYear(Number(e.target.value))}>{[2024, 2025, 2026, 2027, 2028, 2029, 2030].map(y => <option key={y} value={y}>{y}</option>)}</select>
-            </div>
-            <div className="control-group"><input type="text" placeholder="Eğitmen ara..." value={filter} onChange={e => setFilter(e.target.value)} /></div>
-            <button className="btn btn-today" onClick={() => { setMonth(new Date().getMonth()); setYear(new Date().getFullYear()); }}>🔚 Bugün</button>
-            <button className="btn btn-mgmt" onClick={() => setShowMgmt(true)}>👥 Eğitmen Yönetimi</button>
-            <button className="btn btn-excel" onClick={handleExcel}>🟢 Excel</button>
-            <button className="btn btn-report" onClick={() => setShowReport(true)}>📊 Rapor</button>
-          </div>
-
-          <div className="calendar">
-            <div className="calendar-header">{MONTHS[month]} {year}</div>
-            <div className="weekdays">{WEEKDAYS.map(w => <div key={w} className="weekday">{w}</div>)}</div>
-            <div className="days">
-              {filtered.map((d, i) => d ? (
-                <DayCell key={`${year}-${month}-${d.date}`} day={d} trainers={trainers} data={calData[`${year}-${month + 1}-${d.date}`]} onUpdate={onDayUpdate} />
-              ) : <div key={i} style={{background:'#f9f9f9', borderRadius:'15px'}} className="day"></div>)}
-            </div>
-          </div>
-
-          {showMgmt && <TrainerManagement trainers={trainers} onClose={() => setShowMgmt(false)} />}
-          {showReport && <ReportModal calData={calData} days={days} month={month} year={year} onClose={() => setShowReport(false)} />}
-        </div>
+      return React.createElement("div", { className: "container" },
+        React.createElement("div", { className: "header" }, React.createElement("h1", null, "🎬 UZEM Stüdyo Takvimi"), React.createElement("p", null, "Stüdyo Çekim Planlama Sistemi")),
+        React.createElement("div", { className: "controls" },
+          React.createElement("div", { className: "control-group" },
+            React.createElement("select", { value: month, onChange: e => setMonth(Number(e.target.value)) }, MONTHS.map((m, i) => React.createElement("option", { key: i, value: i }, m))),
+            React.createElement("select", { value: year, onChange: e => setYear(Number(e.target.value)) }, [2024, 2025, 2026, 2027, 2028, 2029, 2030].map(y => React.createElement("option", { key: y, value: y }, y)))
+          ),
+          React.createElement("div", { className: "control-group" }, React.createElement("input", { type: "text", placeholder: "Eğitmen ara...", value: filter, onChange: e => setFilter(e.target.value) })),
+          React.createElement("button", { className: "btn btn-today", onClick: () => { setMonth(new Date().getMonth()); setYear(new Date().getFullYear()); } }, "🔚 Bugün"),
+          React.createElement("button", { className: "btn btn-mgmt", onClick: () => setShowMgmt(true) }, "👥 Eğitmen Yönetimi"),
+          React.createElement("button", { className: "btn btn-excel", onClick: handleExcel }, "🟢 Excel"),
+          React.createElement("button", { className: "btn btn-report", onClick: () => setShowReport(true) }, "📊 Rapor")
+        ),
+        React.createElement("div", { className: "calendar" },
+          React.createElement("div", { className: "calendar-header" }, MONTHS[month], " ", year),
+          React.createElement("div", { className: "weekdays" }, WEEKDAYS.map(w => React.createElement("div", { key: w, className: "weekday" }, w))),
+          React.createElement("div", { className: "days" },
+            filtered.map((d, i) => d ? React.createElement(DayCell, { key: `${year}-${month}-${d.date}`, day: d, trainers: trainers, data: calData[`${year}-${month + 1}-${d.date}`], onUpdate: onDayUpdate }) : React.createElement("div", { key: i, style: { background: '#f9f9f9', borderRadius: '15px' }, className: "day" }))
+          )
+        ),
+        showMgmt && React.createElement(TrainerManagement, { trainers: trainers, onClose: () => setShowMgmt(false) }),
+        showReport && React.createElement(ReportModal, { calData: calData, days: days, month: month, year: year, onClose: () => setShowReport(false) })
       );
     }
 
@@ -321,30 +301,26 @@
         setDeleting(null);
       };
 
-      return (
-        <div className="modal active"><div className="modal-content">
-          <button className="close-btn" onClick={onClose}>✕</button>
-          <h2>👥 Eğitmen Yönetimi</h2>
-          <div style={{display:'flex', gap:10, marginBottom:20}}>
-            <input type="text" style={{flex:1}} value={name} onChange={e => setName(e.target.value)} placeholder="Yeni İsim Soyisim" />
-            <button className="btn btn-mgmt" onClick={handleAdd}>Ekle</button>
-          </div>
-          <div style={{maxHeight:'400px', overflowY:'auto'}}>
-            {trainers.map(t => (
-              <div key={t} className="trainer-tag" style={{padding:'10px', marginBottom:8, position:'relative'}}>
-                <span>{t}</span>
-                <button className="btn btn-danger" onClick={() => setDeleting(t)}>Sil</button>
-                {deleting === t && (
-                  <div className="delete-confirm-overlay">
-                    <span style={{fontSize:'0.75em', color:'#333'}}>Emin misiniz?</span>
-                    <button className="btn btn-success" onClick={() => handleConfirmDelete(t)}>Evet</button>
-                    <button className="btn btn-danger" onClick={() => setDeleting(null)}>Hayır</button>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div></div>
+      return React.createElement("div", { className: "modal active" },
+        React.createElement("div", { className: "modal-content" },
+          React.createElement("button", { className: "close-btn", onClick: onClose }, "✕"),
+          React.createElement("h2", null, "👥 Eğitmen Yönetimi"),
+          React.createElement("div", { style: { display: 'flex', gap: 10, marginBottom: 20 } },
+            React.createElement("input", { type: "text", style: { flex: 1 }, value: name, onChange: e => setName(e.target.value), placeholder: "Yeni İsim Soyisim" }),
+            React.createElement("button", { className: "btn btn-mgmt", onClick: handleAdd }, "Ekle")
+          ),
+          React.createElement("div", { style: { maxHeight: '400px', overflowY: 'auto' } },
+            trainers.map(t => React.createElement("div", { key: t, className: "trainer-tag" }, style: { padding: '10px', marginBottom: 8, position: 'relative' },
+              React.createElement("span", null, t),
+              React.createElement("button", { className: "btn btn-danger", onClick: () => setDeleting(t) }, "Sil"),
+              deleting === t && React.createElement("div", { className: "delete-confirm-overlay" },
+                React.createElement("span", { style: { fontSize: '0.75em', color: '#333' } }, "Emin misiniz?"),
+                React.createElement("button", { className: "btn btn-success", onClick: () => handleConfirmDelete(t) }, "Evet"),
+                React.createElement("button", { className: "btn btn-danger", onClick: () => setDeleting(null) }, "Hayır")
+              )
+            ))
+          )
+        )
       );
     };
 
@@ -383,21 +359,21 @@
         return () => { if (chartRef.current) chartRef.current.destroy(); };
       }, [stats]);
 
-      return (
-        <div className="modal active"><div className="modal-content">
-          <button className="close-btn" onClick={onClose}>✕</button>
-          <h2>📊 {MONTHS[month]} {year} Doluluk Raporu</h2>
-          <div style={{display:'flex', justifyContent:'space-around', textAlign:'center', marginBottom:20}}>
-            <div><h3>{stats.filled}</h3><p>Dolu Seans</p></div>
-            <div><h3>%{stats.rate}</h3><p>Doluluk Oranı</p></div>
-          </div>
-          <div style={{height:300}}><canvas ref={canvasRef}></canvas></div>
-        </div></div>
+      return React.createElement("div", { className: "modal active" },
+        React.createElement("div", { className: "modal-content" },
+          React.createElement("button", { className: "close-btn", onClick: onClose }, "✕"),
+          React.createElement("h2", null, "📊 ", MONTHS[month], " ", year, " Doluluk Raporu"),
+          React.createElement("div", { style: { display: 'flex', justifyContent: 'space-around', textAlign: 'center', marginBottom: 20 } },
+            React.createElement("div", null, React.createElement("h3", null, stats.filled), React.createElement("p", null, "Dolu Seans")),
+            React.createElement("div", null, React.createElement("h3", null, "%", stats.rate), React.createElement("p", null, "Doluluk Oranı"))
+          ),
+          React.createElement("div", { style: { height: 300 } }, React.createElement("canvas", { ref: canvasRef }))
+        )
       );
     };
 
     const root = ReactDOM.createRoot(document.getElementById("root"));
-    root.render(<App />);
+    root.render(React.createElement(App));
   </script>
 </body>
 </html>
